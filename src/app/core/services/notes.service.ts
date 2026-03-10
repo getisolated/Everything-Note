@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Note, NotePreview } from '../models/note.model';
 import { ElectronBridgeService } from './electron-bridge.service';
 
@@ -16,6 +16,7 @@ function toPreview(n: Note): NotePreview {
 
 @Injectable({ providedIn: 'root' })
 export class NotesService {
+  private bridge = inject(ElectronBridgeService);
   private readonly _notes = signal<Note[]>([]);
 
   readonly notes = this._notes.asReadonly();
@@ -23,8 +24,6 @@ export class NotesService {
   readonly notePreviews = computed<NotePreview[]>(() =>
     this._notes().map(toPreview)
   );
-
-  constructor(private bridge: ElectronBridgeService) {}
 
   async loadAll(): Promise<void> {
     const notes = await this.bridge.getAllNotes();

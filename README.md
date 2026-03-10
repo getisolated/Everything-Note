@@ -1,59 +1,103 @@
-# EvNote
+# Everything Note
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.22.
+A fast, keyboard-driven note-taking desktop app built with Angular, Electron, and SQLite.
 
-## Development server
+<p align="center">
+  <img src="assets/logo.png" alt="Everything Note" width="128" />
+</p>
 
-To start a local development server, run:
+<p align="center">
+  <img src="assets/screenshot.png" alt="Screenshot" width="800" />
+</p>
 
-```bash
-ng serve
+## Features
+
+- **Markdown editor** — CodeMirror 6 with live decorations (headings, bold, italic, code blocks, task lists)
+- **Full-text search** — SQLite FTS5 for instant search across all notes
+- **Command palette** — `F1` to search notes, commands, and tags
+- **Tabs** — drag & drop reordering, pinning, session restore
+- **Tag system** — organize notes with tags, filter from the sidebar
+- **Keyboard-first** — every action has a shortcut (see below)
+- **Local storage** — all data stays on your machine in a SQLite database
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Angular 19 (standalone components, signals, OnPush) |
+| Editor | CodeMirror 6 with custom markdown decorations |
+| Desktop | Electron 32 (frameless window, custom title bar) |
+| Database | better-sqlite3 with FTS5, WAL mode, cached prepared statements |
+| Build | electron-builder (NSIS installer), GitHub Actions CI/CD |
+
+## Architecture
+
+```
+electron/
+  main.ts            # Main process — window management, IPC handlers
+  preload.ts         # Context bridge (electronAPI)
+  database.ts        # SQLite schema, FTS5 triggers, CRUD operations
+
+src/app/
+  core/
+    services/        # NotesService, TabsService, PaletteService, ShortcutsService
+    models/          # TypeScript interfaces (Note, Tab, PaletteItem)
+  features/
+    editor/          # CodeMirror markdown editor with auto-save
+    home/            # Note list with tag filtering & context menu
+    tabs/            # Tab bar with drag & drop, pinning, window controls
+    palette/         # Command/search/tag palette (F1 / Ctrl+Shift+F)
+  shared/
+    codemirror/      # VS Code Dark Modern theme, markdown decorations, widgets
+    context-menu/    # Reusable context menu component
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Keyboard Shortcuts
 
-## Code scaffolding
+| Shortcut | Action |
+|----------|--------|
+| `F1` | Command palette |
+| `Ctrl+N` | New note |
+| `Ctrl+W` | Close tab |
+| `Ctrl+F` | Find in editor |
+| `Ctrl+Shift+F` | Search all notes |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Next / previous tab |
+| `Ctrl+S` | Save note |
+| `Ctrl+B` / `Ctrl+I` / `Ctrl+K` | Bold / italic / link |
+| `Alt+P` | Pin/unpin tab |
+| `Alt+Z` | Toggle wide mode |
+| `Alt+Ctrl+1-9` | Jump to tab by index |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Getting Started
 
-```bash
-ng generate component component-name
-```
+### Prerequisites
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- Node.js 20+
+- npm
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Install & Run
 
 ```bash
-ng test
+# Install dependencies
+npm install
+
+# Rebuild native modules for Electron
+npm run electron:rebuild
+
+# Start in development mode (Angular dev server + Electron)
+npm run dev
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### Build for Production
 
 ```bash
-ng e2e
+# Build Angular + compile Electron TypeScript
+npm run build
+
+# Package as Windows installer (.exe)
+npm run dist
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## License
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+MIT

@@ -52,7 +52,7 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
-            sandbox: false,
+            sandbox: true,
         },
     });
     if (isDev) {
@@ -111,4 +111,9 @@ safeHandle('notes:search', (_e, query) => database_1.noteOps.search(query));
 safeHandle('notes:byTag', (_e, tag) => database_1.noteOps.getByTag(tag));
 safeHandle('notes:allTags', () => database_1.noteOps.getAllTags());
 // ── Shell ─────────────────────────────────────────────────────────────────────
-safeHandle('shell:openExternal', (_e, url) => electron_1.shell.openExternal(url));
+safeHandle('shell:openExternal', (_e, url) => {
+    if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
+        throw new Error('Only http:// and https:// URLs are allowed');
+    }
+    return electron_1.shell.openExternal(url);
+});

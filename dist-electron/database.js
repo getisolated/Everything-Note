@@ -39,10 +39,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.noteOps = void 0;
 exports.initDatabase = initDatabase;
 exports.closeDatabase = closeDatabase;
+exports.sanitizeFtsQuery = sanitizeFtsQuery;
+exports.escapeLike = escapeLike;
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path = __importStar(require("path"));
 const electron_1 = require("electron");
 let db;
+// Cached prepared statements (initialized after DB open)
+let stmts;
 function initDatabase() {
     const dbPath = path.join(electron_1.app.getPath('userData'), 'evnote.db');
     db = new better_sqlite3_1.default(dbPath);
@@ -78,6 +82,21 @@ function initDatabase() {
       INSERT INTO notes_fts(rowid, title, content) VALUES (new.id, new.title, new.content);
     END;
   `);
+    // Cache prepared statements after schema is ready
+    stmts = {
+        getAll: db.prepare('SELECT * FROM notes ORDER BY updated_at DESC'),
+        getById: db.prepare('SELECT * FROM notes WHERE id = ?'),
+        create: db.prepare("INSERT INTO notes (title, content, tags) VALUES (?, ?, '[]')"),
+        delete: db.prepare('DELETE FROM notes WHERE id = ?'),
+        search: db.prepare(`
+      SELECT notes.* FROM notes
+      JOIN notes_fts ON notes.id = notes_fts.rowid
+      WHERE notes_fts MATCH ?
+      ORDER BY rank
+    `),
+        getByTag: db.prepare("SELECT * FROM notes WHERE tags LIKE ? ESCAPE '\\' ORDER BY updated_at DESC"),
+        getAllTags: db.prepare('SELECT tags FROM notes'),
+    };
 }
 function closeDatabase() {
     if (db) {
@@ -93,16 +112,22 @@ function sanitizeFtsQuery(query) {
         .map(token => `"${token.replace(/"/g, '""')}"`)
         .join(' ');
 }
+/** Escapes LIKE wildcards so user input is treated as literal text. */
+function escapeLike(value) {
+    return value
+        .replace(/\\/g, '\\\\')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_');
+}
 exports.noteOps = {
     getAll() {
-        return db.prepare(`SELECT * FROM notes ORDER BY updated_at DESC`).all();
+        return stmts.getAll.all();
     },
     getById(id) {
-        return db.prepare(`SELECT * FROM notes WHERE id = ?`).get(id);
+        return stmts.getById.get(id);
     },
     create(title, content) {
-        const stmt = db.prepare(`INSERT INTO notes (title, content, tags) VALUES (?, ?, '[]')`);
-        const result = stmt.run(title, content);
+        const result = stmts.create.run(title, content);
         return this.getById(result.lastInsertRowid);
     },
     update(id, data) {
@@ -122,13 +147,13 @@ exports.noteOps = {
         }
         if (fields.length === 0)
             return this.getById(id);
-        fields.push(`updated_at = datetime('now')`);
+        fields.push("updated_at = datetime('now')");
         values.push(id);
         db.prepare(`UPDATE notes SET ${fields.join(', ')} WHERE id = ?`).run(...values);
         return this.getById(id);
     },
     delete(id) {
-        db.prepare(`DELETE FROM notes WHERE id = ?`).run(id);
+        stmts.delete.run(id);
     },
     search(query) {
         if (!query.trim())
@@ -136,21 +161,14 @@ exports.noteOps = {
         const sanitized = sanitizeFtsQuery(query);
         if (!sanitized)
             return this.getAll();
-        return db.prepare(`
-      SELECT notes.* FROM notes
-      JOIN notes_fts ON notes.id = notes_fts.rowid
-      WHERE notes_fts MATCH ?
-      ORDER BY rank
-    `).all(sanitized + '*');
+        return stmts.search.all(sanitized + '*');
     },
     getByTag(tag) {
-        const sanitizedTag = tag.replace(/"/g, '');
-        return db.prepare(`
-      SELECT * FROM notes WHERE tags LIKE ? ORDER BY updated_at DESC
-    `).all(`%"${sanitizedTag}"%`);
+        const escaped = escapeLike(tag.replace(/"/g, ''));
+        return stmts.getByTag.all(`%"${escaped}"%`);
     },
     getAllTags() {
-        const rows = db.prepare(`SELECT tags FROM notes`).all();
+        const rows = stmts.getAllTags.all();
         const tagSet = new Set();
         for (const row of rows) {
             try {

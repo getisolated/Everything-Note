@@ -1,38 +1,38 @@
 export const SAMPLE_NOTES: { title: string; content: string }[] = [
   {
-    title: 'Markdown basique',
-    content: `# Titre principal H1
+    title: 'Markdown Basics',
+    content: `# Main Heading H1
 
-## Sous-titre H2
+## Subheading H2
 
 ### Section H3
 
-#### Sous-section H4
+#### Subsection H4
 
-Ceci est un paragraphe normal avec du **texte en gras**, du *texte en italique*, et du ~~texte barré~~. On peut aussi combiner ***gras et italique***.
+This is a regular paragraph with **bold text**, *italic text*, and ~~strikethrough~~. You can also combine ***bold and italic***.
 
-Voici un [lien vers Google](https://google.com) et du \`code inline\` dans une phrase.
+Here is a [link to Google](https://google.com) and some \`inline code\` in a sentence.
 
 ---
 
-> Ceci est une citation blockquote.
-> Elle peut s'étendre sur plusieurs lignes.
+> This is a blockquote.
+> It can span multiple lines.
 
-Liste non ordonnée :
-- Premier élément
-- Deuxième élément
-- Troisième élément
+Unordered list:
+- First item
+- Second item
+- Third item
 
-Liste ordonnée :
-1. Étape une
-2. Étape deux
-3. Étape trois`,
+Ordered list:
+1. Step one
+2. Step two
+3. Step three`,
   },
   {
-    title: 'Code Blocks Test',
-    content: `# Code Blocks Test
+    title: 'Code Blocks',
+    content: `# Code Blocks
 
-Voici du TypeScript :
+Here is some TypeScript:
 
 \`\`\`typescript
 interface User {
@@ -56,7 +56,7 @@ export class UserService {
 }
 \`\`\`
 
-Du Python :
+Some Python:
 
 \`\`\`python
 def fibonacci(n: int) -> list[int]:
@@ -73,7 +73,7 @@ result = fibonacci(10)
 print(f"Fibonacci: {result}")  # [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 \`\`\`
 
-Du SQL :
+Some SQL:
 
 \`\`\`sql
 SELECT u.name, COUNT(o.id) AS total_orders
@@ -86,63 +86,63 @@ ORDER BY total_orders DESC;
 \`\`\``,
   },
   {
-    title: 'Roadmap Projet EvNote',
-    content: `# Roadmap Projet EvNote
+    title: 'Project Roadmap',
+    content: `# Project Roadmap
 
-## Sprint actuel
+## Current Sprint
 
-- [x] Implémenter l'éditeur Markdown
-- [x] Ajouter la palette de commandes
-- [ ] Ajouter le support des images
-- [ ] Exporter en PDF
+- [x] Implement the Markdown editor
+- [x] Add the command palette
+- [ ] Add image support
+- [ ] Export to PDF
 
-## Bugs à corriger
+## Bugs to Fix
 
-- ( ) Crash au démarrage sur Linux
-- (x) Fix du scroll dans la liste des notes
-- ( ) Recherche FTS ne trouve pas les accents
+- ( ) Startup crash on Linux
+- (x) Fix scroll in the notes list
+- ( ) FTS search doesn't match accented characters
 
 ## Notes
 
-Le format \`( )\` et \`(x)\` utilise des bullets ronds au lieu de checkboxes.
+The \`( )\` and \`(x)\` format uses round bullets instead of checkboxes.
 
-Tandis que \`[ ]\` et \`[x]\` affiche de vraies **checkboxes** cliquables.
+While \`[ ]\` and \`[x]\` renders actual clickable **checkboxes**.
 
-Priorités : \`haute\` > \`moyenne\` > \`basse\``,
+Priorities: \`high\` > \`medium\` > \`low\``,
   },
   {
-    title: 'Guide de contribution',
-    content: `# Guide de contribution
+    title: 'Contributing Guide',
+    content: `# Contributing Guide
 
-## Prérequis
+## Prerequisites
 
-Installer les dépendances avec :
+Install dependencies with:
 
 \`\`\`bash
 npm install
 npm run electron:rebuild
 \`\`\`
 
-> **Important** : Ne pas oublier \`electron:rebuild\` après chaque \`npm install\`, sinon \`better-sqlite3\` ne fonctionnera pas.
+> **Important**: Don't forget \`electron:rebuild\` after each \`npm install\`, otherwise \`better-sqlite3\` won't work.
 
 ## Architecture
 
-Le projet suit cette structure :
+The project follows this structure:
 
-| Dossier | Rôle |
-|---------|------|
-| \`electron/\` | Process principal |
-| \`src/app/core/\` | Services Angular |
-| \`src/app/features/\` | Composants UI |
+| Folder | Role |
+|--------|------|
+| \`electron/\` | Main process |
+| \`src/app/core/\` | Angular services |
+| \`src/app/features/\` | UI components |
 
-## Checklist avant PR
+## PR Checklist
 
-- [ ] Code compile sans erreur
-- [ ] Pas de \`console.log\` oublié
-- [x] Tests passent
-- [x] Lint propre
+- [ ] Code compiles without errors
+- [ ] No leftover \`console.log\`
+- [x] Tests pass
+- [x] Lint is clean
 
-## Exemple de service
+## Service Example
 
 \`\`\`typescript
 @Injectable({ providedIn: 'root' })
@@ -156,11 +156,6 @@ export class NotesService {
     this._notes.set(notes);
   }
 }
-\`\`\`
-
----
-
-*Dernière mise à jour : mars 2026*
-**Auteur** : ~~ancien dev~~ Yassine`,
+\`\`\``,
   },
 ];

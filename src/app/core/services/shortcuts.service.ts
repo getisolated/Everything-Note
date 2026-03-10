@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, NgZone } from '@angular/core';
+import { Injectable, OnDestroy, NgZone, inject } from '@angular/core';
 
 type ShortcutHandler = (event: KeyboardEvent) => void;
 
@@ -13,10 +13,11 @@ interface ShortcutDef {
 
 @Injectable({ providedIn: 'root' })
 export class ShortcutsService implements OnDestroy {
+  private zone = inject(NgZone);
   private shortcuts: ShortcutDef[] = [];
   private boundListener: (e: KeyboardEvent) => void;
 
-  constructor(private zone: NgZone) {
+  constructor() {
     this.boundListener = this.handleKeydown.bind(this);
     window.addEventListener('keydown', this.boundListener, true);
   }

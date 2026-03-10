@@ -104,7 +104,7 @@ import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-men
         [x]="ctxMenu()!.x"
         [y]="ctxMenu()!.y"
         (action)="onCtxAction($event)"
-        (close)="ctxMenu.set(null)"
+        (closed)="ctxMenu.set(null)"
       />
     }
   `,

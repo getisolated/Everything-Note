@@ -85,7 +85,7 @@ export function closeDatabase(): void {
 }
 
 /** Escapes special FTS5 characters so user input is treated as literal text. */
-function sanitizeFtsQuery(query: string): string {
+export function sanitizeFtsQuery(query: string): string {
   return query
     .trim()
     .split(/\s+/)
@@ -95,7 +95,7 @@ function sanitizeFtsQuery(query: string): string {
 }
 
 /** Escapes LIKE wildcards so user input is treated as literal text. */
-function escapeLike(value: string): string {
+export function escapeLike(value: string): string {
   return value
     .replace(/\\/g, '\\\\')
     .replace(/%/g, '\\%')

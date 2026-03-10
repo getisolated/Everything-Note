@@ -32,8 +32,8 @@ export function isDivider(entry: ContextMenuEntry): entry is ContextMenuDivider 
   template: `
     <div
       class="ctx-backdrop"
-      (click)="close.emit()"
-      (contextmenu)="$event.preventDefault(); close.emit()"
+      (click)="closed.emit()"
+      (contextmenu)="$event.preventDefault(); closed.emit()"
     ></div>
     <div
       class="ctx-menu"
@@ -108,7 +108,7 @@ export class ContextMenuComponent implements OnInit, OnDestroy {
   @Input() items: ContextMenuEntry[] = [];
   @Input() x = 0;
   @Input() y = 0;
-  @Output() close = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
   @Output() action = new EventEmitter<string>();
 
   private el = inject(ElementRef);
@@ -137,7 +137,7 @@ export class ContextMenuComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.close.emit();
+    this.closed.emit();
   }
 
   onItemClick(event: MouseEvent, item: ContextMenuItem): void {
@@ -145,7 +145,7 @@ export class ContextMenuComponent implements OnInit, OnDestroy {
     if (item.disabled) return;
     if (item.children?.length) return; // parent items don't fire
     this.action.emit(item.id);
-    this.close.emit();
+    this.closed.emit();
   }
 
   onItemEnter(index: number): void {

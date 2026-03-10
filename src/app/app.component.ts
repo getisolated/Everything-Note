@@ -106,7 +106,7 @@ export class AppComponent implements OnInit, OnDestroy {
     };
 
     // Prevent Ctrl+R from reloading the app
-    reg({ key: 'r', ctrl: true, handler: () => {} });
+    reg({ key: 'r', ctrl: true, handler: () => { /* noop — block browser reload */ } });
 
     reg({ key: 'F1', handler: () => this.paletteService.toggle('command') });
     reg({ key: 'n', ctrl: true, handler: () => this.createNote() });

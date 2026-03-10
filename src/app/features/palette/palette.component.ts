@@ -274,11 +274,12 @@ export class PaletteComponent implements OnDestroy {
         event.preventDefault();
         this.selectedIndex.update(i => (i - 1 + Math.max(1, total)) % Math.max(1, total));
         break;
-      case 'Enter':
+      case 'Enter': {
         event.preventDefault();
         const result = this.results()[this.selectedIndex()];
         if (result) this.execute(result);
         break;
+      }
       case 'Escape':
         event.preventDefault();
         event.stopPropagation();

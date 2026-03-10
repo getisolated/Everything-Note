@@ -131,23 +131,21 @@ export class EditorComponent implements OnDestroy, OnChanges {
     this.destroyEditor();
     if (!this.editorHost?.nativeElement) return;
 
-    const self = this;
-
     const updateListener = EditorView.updateListener.of(update => {
-      if (update.docChanged && !self.isUpdatingFromModel) {
+      if (update.docChanged && !this.isUpdatingFromModel) {
         const content = update.state.doc.toString();
-        const note = self.activeNote();
+        const note = this.activeNote();
         if (!note) return;
 
         // Extract title from first line
-        const title = self.notes.extractTitle(content);
-        self.tabs.updateTitle(note.id, title || 'Untitled');
-        self.tabs.markDirty(note.id, true);
+        const title = this.notes.extractTitle(content);
+        this.tabs.updateTitle(note.id, title || 'Untitled');
+        this.tabs.markDirty(note.id, true);
 
         // Debounce auto-save (1s)
-        if (self.saveDebounce) clearTimeout(self.saveDebounce);
-        self.saveDebounce = setTimeout(() => {
-          self.zone.run(() => self.saveNote(note.id, content));
+        if (this.saveDebounce) clearTimeout(this.saveDebounce);
+        this.saveDebounce = setTimeout(() => {
+          this.zone.run(() => this.saveNote(note.id, content));
         }, 1000);
       }
     });
@@ -290,11 +288,11 @@ export class EditorComponent implements OnDestroy, OnChanges {
         // Save: Ctrl+S
         {
           key: 'Ctrl-s',
-          run(view) {
-            const note = self.activeNote();
+          run: (view) => {
+            const note = this.activeNote();
             if (!note) return true;
-            if (self.saveDebounce) clearTimeout(self.saveDebounce);
-            self.zone.run(() => self.saveNote(note.id, view.state.doc.toString()));
+            if (this.saveDebounce) clearTimeout(this.saveDebounce);
+            this.zone.run(() => this.saveNote(note.id, view.state.doc.toString()));
             return true;
           }
         },

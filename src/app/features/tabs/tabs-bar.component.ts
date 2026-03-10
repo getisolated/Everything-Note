@@ -46,7 +46,7 @@ import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-men
             [class.dragging]="dragIndex() === i"
             (click)="selectTab(i)"
             (dblclick)="$event.stopPropagation()"
-            (mousedown)="onTabMouseDown($event, i)"
+            (mousedown)="onTabMouseDown($event)"
             (auxclick)="onAuxClick($event, i)"
             (contextmenu)="onTabContextMenu($event, i)"
             [title]="tab.title || 'Untitled'"
@@ -132,7 +132,7 @@ import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-men
         [x]="ctxMenu()!.x"
         [y]="ctxMenu()!.y"
         (action)="onCtxAction($event)"
-        (close)="ctxMenu.set(null)"
+        (closed)="ctxMenu.set(null)"
       />
     }
   `,
@@ -171,7 +171,7 @@ export class TabsBarComponent {
     this.tabs$.closeTab(index);
   }
 
-  onTabMouseDown(event: MouseEvent, index: number): void {
+  onTabMouseDown(event: MouseEvent): void {
     if (event.button === 1) event.preventDefault();
   }
 
