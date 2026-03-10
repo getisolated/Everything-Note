@@ -1,0 +1,74 @@
+name: Build & Sign
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+# Cancel in-progress runs on the same branch
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild native modules for Electron
+        run: npx @electron/rebuild -f -w better-sqlite3
+
+      - name: Build Angular + Electron
+        run: npm run build
+
+      - name: Generate self-signed certificate
+        shell: pwsh
+        run: |
+          $cert = New-SelfSignedCertificate `
+            -Type CodeSigningCert `
+            -Subject "CN=Everything Note, O=EvNote" `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -NotAfter (Get-Date).AddYears(3)
+          $pwd = ConvertTo-SecureString -String "evnote-build" -Force -AsPlainText
+          $pfxPath = "${{ runner.temp }}\cert.pfx"
+          Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password $pwd
+          $base64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($pfxPath))
+          echo "CSC_LINK=$base64" >> $env:GITHUB_ENV
+          echo "CSC_KEY_PASSWORD=evnote-build" >> $env:GITHUB_ENV
+
+      - name: Package & Sign
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npx electron-builder --win --publish never
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EvNote-Windows-${{ github.sha }}
+          path: release/*.exe
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Create GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+          draft: true
+          generate_release_notes: true
