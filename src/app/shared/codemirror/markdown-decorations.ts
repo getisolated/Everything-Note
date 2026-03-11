@@ -46,12 +46,17 @@ function buildDecorations(view: EditorView): DecorationSet {
           pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-h4' }) });
           break;
 
-        // ── Heading marks (hide when cursor not in heading) ───────
-        case 'HeaderMark':
-          if (!inCursor) {
-            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-hidden' }) });
+        // ── Heading marks (hide # when cursor not on heading) ─────
+        case 'HeaderMark': {
+          const heading = node.node.parent;
+          if (heading && !cursorInRange(view, heading.from, heading.to)) {
+            const end = (to < doc.length && doc.sliceString(to, to + 1) === ' ') ? to + 1 : to;
+            pending.push({ from, to: end, deco: Decoration.replace({}) });
+          } else {
+            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-dim' }) });
           }
           break;
+        }
 
         // ── Bold ──────────────────────────────────────────────────
         case 'StrongEmphasis':
@@ -63,15 +68,48 @@ function buildDecorations(view: EditorView): DecorationSet {
           pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-italic' }) });
           break;
 
+        // ── Emphasis marks (hide * or ** when cursor not in range) ─
+        case 'EmphasisMark': {
+          const emParent = node.node.parent;
+          if (emParent && !cursorInRange(view, emParent.from, emParent.to)) {
+            pending.push({ from, to, deco: Decoration.replace({}) });
+          } else {
+            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-dim' }) });
+          }
+          break;
+        }
+
         // ── Strikethrough ─────────────────────────────────────────
         case 'Strikethrough':
           pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-strike' }) });
           break;
 
+        // ── Strikethrough marks (hide ~~ when cursor not in range)
+        case 'StrikethroughMark': {
+          const stParent = node.node.parent;
+          if (stParent && !cursorInRange(view, stParent.from, stParent.to)) {
+            pending.push({ from, to, deco: Decoration.replace({}) });
+          } else {
+            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-dim' }) });
+          }
+          break;
+        }
+
         // ── Inline code ───────────────────────────────────────────
         case 'InlineCode':
           pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-inline-code' }) });
           break;
+
+        // ── Code marks (hide ` when cursor not in inline code) ────
+        case 'CodeMark': {
+          const cmParent = node.node.parent;
+          if (cmParent && cmParent.name === 'InlineCode' && !cursorInRange(view, cmParent.from, cmParent.to)) {
+            pending.push({ from, to, deco: Decoration.replace({}) });
+          } else if (cmParent && cmParent.name === 'InlineCode') {
+            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-dim' }) });
+          }
+          break;
+        }
 
         // ── Code block ────────────────────────────────────────────
         case 'FencedCode':
@@ -87,6 +125,18 @@ function buildDecorations(view: EditorView): DecorationSet {
         case 'Blockquote':
           pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-blockquote' }) });
           break;
+
+        // ── Quote marks (hide > when cursor not on the line) ──────
+        case 'QuoteMark': {
+          const qline = doc.lineAt(from);
+          if (!cursorInRange(view, qline.from, qline.to)) {
+            const end = (to < doc.length && doc.sliceString(to, to + 1) === ' ') ? to + 1 : to;
+            pending.push({ from, to: end, deco: Decoration.replace({}) });
+          } else {
+            pending.push({ from, to, deco: Decoration.mark({ class: 'cm-md-mark-dim' }) });
+          }
+          break;
+        }
 
         // ── Links ─────────────────────────────────────────────────
         case 'Link':
@@ -179,6 +229,10 @@ export const markdownDecorationTheme = EditorView.baseTheme({
   '.cm-md-mark-hidden': {
     color: '#3e4a57 !important',
     fontSize: '0.75em',
+  },
+  '.cm-md-mark-dim': {
+    color: '#4a5568 !important',
+    opacity: '0.5',
   },
   '.cm-md-bold': {
     fontWeight: '700',

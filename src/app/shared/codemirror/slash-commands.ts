@@ -26,15 +26,12 @@ function isInCodeBlock(state: EditorState, pos: number): boolean {
   return false;
 }
 
-/** Replaces `/query` with a line prefix (heading, list, quote, etc.) */
+/** Replaces the slash range (from `/` to end of query) with a line prefix */
 function insertLinePrefix(view: EditorView, range: { from: number; to: number }, prefix: string) {
   const line = view.state.doc.lineAt(range.from);
-  // Remove existing line prefixes (headings, list markers, blockquotes)
-  const stripped = line.text.replace(/^(\s*)(?:#{1,6}\s+|[-*+]\s+|\d+\.\s+|>\s+)?/, '$1');
-  // Replace the entire line with prefix + stripped content (minus the /query part)
-  const slashContent = view.state.sliceDoc(range.from, range.to);
-  const contentAfterSlash = stripped.replace(slashContent, '').trimEnd();
-  const newText = prefix + contentAfterSlash;
+  const beforeSlash = view.state.sliceDoc(line.from, range.from);
+  const afterQuery = view.state.sliceDoc(range.to, line.to);
+  const newText = beforeSlash.replace(/^(\s*).*/, '$1') + prefix + afterQuery.trimStart();
   view.dispatch({
     changes: { from: line.from, to: line.to, insert: newText },
     selection: { anchor: line.from + newText.length },
@@ -255,8 +252,10 @@ class SlashMenuWidget {
     }
 
     this.render(state);
-    this.position(view, state.from);
     this.dom.style.display = 'block';
+
+    // Position after the DOM is visible so measurements are accurate
+    requestAnimationFrame(() => this.position(view, state.from));
   }
 
   hide() {
@@ -276,10 +275,13 @@ class SlashMenuWidget {
   private position(view: EditorView, pos: number) {
     if (!this.dom) return;
     const coords = view.coordsAtPos(pos);
-    if (!coords) return;
-
-    const editorRect = view.dom.getBoundingClientRect();
-    const lineHeight = view.defaultLineHeight;
+    if (!coords) {
+      // Fallback: position near top-left of editor
+      const rect = view.dom.getBoundingClientRect();
+      this.dom.style.top = `${rect.top + 40}px`;
+      this.dom.style.left = `${rect.left + 48}px`;
+      return;
+    }
 
     // Position below the cursor
     let top = coords.bottom + 4;
@@ -320,14 +322,14 @@ class SlashMenuWidget {
 
     let html = '';
     for (const [group, items] of groups) {
-      html += `<div class="cm-slash-group-label">${group}</div>`;
+      html += `<div class="cm-slash-group-label">${this.escapeHtml(group)}</div>`;
       for (const { cmd, globalIndex } of items) {
         const isSelected = globalIndex === selectedIndex;
         html += `<div class="cm-slash-item${isSelected ? ' cm-slash-item-selected' : ''}" data-index="${globalIndex}">
           <div class="cm-slash-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none">${cmd.icon}</svg></div>
           <div class="cm-slash-item-content">
-            <span class="cm-slash-item-label">${cmd.label}</span>
-            <span class="cm-slash-item-desc">${cmd.description}</span>
+            <span class="cm-slash-item-label">${this.escapeHtml(cmd.label)}</span>
+            <span class="cm-slash-item-desc">${this.escapeHtml(cmd.description)}</span>
           </div>
         </div>`;
       }
@@ -357,6 +359,12 @@ class SlashMenuWidget {
     if (selectedEl) {
       selectedEl.scrollIntoView({ block: 'nearest' });
     }
+  }
+
+  private escapeHtml(text: string): string {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
   }
 }
 
@@ -412,11 +420,42 @@ const placeholderPlugin = ViewPlugin.fromClass(
   { decorations: (v: { decorations: DecorationSet }) => v.decorations }
 );
 
+// ─── Input handler for '/' detection ─────────────────────────────────────────
+// Uses EditorView.inputHandler instead of keymap for reliable character detection
+// across all keyboard layouts (AZERTY, QWERTZ, etc.)
+
+const slashInputHandler = EditorView.inputHandler.of(
+  (view: EditorView, from: number, to: number, text: string) => {
+    // Only handle single '/' character input (no replacements)
+    if (text !== '/') return false;
+
+    const menuState = view.state.field(slashMenuState);
+    if (menuState.active) return false;
+
+    if (isInCodeBlock(view.state, from)) return false;
+
+    const line = view.state.doc.lineAt(from);
+    const textBefore = view.state.sliceDoc(line.from, from);
+
+    // Only activate if at start of line (optionally preceded by whitespace)
+    if (textBefore.trim() !== '') return false;
+
+    // Insert '/' and open the menu
+    view.dispatch({
+      changes: { from, to, insert: '/' },
+      selection: { anchor: from + 1 },
+      effects: openSlashMenu.of({ from, to: from + 1 }),
+    });
+    return true;
+  }
+);
+
 // ─── Main Plugin ─────────────────────────────────────────────────────────────
 
 const slashMenuPlugin = ViewPlugin.fromClass(
   class {
     private widget = new SlashMenuWidget();
+    private trackTimeout: ReturnType<typeof setTimeout> | null = null;
 
     constructor(private view: EditorView) {
       this.syncWidget();
@@ -426,6 +465,7 @@ const slashMenuPlugin = ViewPlugin.fromClass(
       const state = update.state.field(slashMenuState);
       const prevState = update.startState.field(slashMenuState);
 
+      // Sync widget display on state changes
       if (state.active !== prevState.active ||
           state.query !== prevState.query ||
           state.selectedIndex !== prevState.selectedIndex ||
@@ -435,22 +475,27 @@ const slashMenuPlugin = ViewPlugin.fromClass(
 
       // Track typing after '/' was inserted
       if (state.active && update.docChanged) {
-        this.trackQuery(update);
+        this.scheduleTrackQuery(update);
       }
 
       // Close menu if cursor moves away from the slash range
-      if (state.active && update.selectionSet) {
+      if (state.active && update.selectionSet && !update.docChanged) {
         const sel = update.state.selection.main;
-        const line = update.state.doc.lineAt(state.from);
-        const cursorLine = update.state.doc.lineAt(sel.head);
-        if (cursorLine.number !== line.number || sel.head < state.from) {
+        if (state.from >= update.state.doc.length) {
           update.view.dispatch({ effects: closeSlashMenu.of(undefined) });
+        } else {
+          const line = update.state.doc.lineAt(state.from);
+          const cursorLine = update.state.doc.lineAt(sel.head);
+          if (cursorLine.number !== line.number || sel.head < state.from) {
+            update.view.dispatch({ effects: closeSlashMenu.of(undefined) });
+          }
         }
       }
     }
 
     destroy() {
       this.widget.destroy();
+      if (this.trackTimeout) clearTimeout(this.trackTimeout);
     }
 
     private syncWidget() {
@@ -462,62 +507,49 @@ const slashMenuPlugin = ViewPlugin.fromClass(
       }
     }
 
-    private trackQuery(update: ViewUpdate) {
-      const state = update.state.field(slashMenuState);
-      if (!state.active) return;
+    private scheduleTrackQuery(update: ViewUpdate) {
+      // Defer the dispatch to avoid dispatching inside update synchronously
+      if (this.trackTimeout) clearTimeout(this.trackTimeout);
+      const view = update.view;
+      this.trackTimeout = setTimeout(() => {
+        this.trackTimeout = null;
+        const state = view.state.field(slashMenuState);
+        if (!state.active) return;
 
-      const line = update.state.doc.lineAt(state.from);
-      const textAfterSlash = update.state.sliceDoc(state.from, line.to);
+        // Safety check: make sure from is within document bounds
+        if (state.from >= view.state.doc.length) {
+          view.dispatch({ effects: closeSlashMenu.of(undefined) });
+          return;
+        }
 
-      // If the slash itself was deleted, close menu
-      if (state.from > line.to || !textAfterSlash.startsWith('/')) {
-        update.view.dispatch({ effects: closeSlashMenu.of(undefined) });
-        return;
-      }
+        const line = view.state.doc.lineAt(state.from);
+        const textFromSlash = view.state.sliceDoc(state.from, line.to);
 
-      const query = textAfterSlash.slice(1); // remove the '/' prefix
+        // If the slash itself was deleted, close menu
+        if (!textFromSlash.startsWith('/')) {
+          view.dispatch({ effects: closeSlashMenu.of(undefined) });
+          return;
+        }
 
-      // Close if user typed a space (they're just writing a normal /)
-      if (query.includes(' ')) {
-        update.view.dispatch({ effects: closeSlashMenu.of(undefined) });
-        return;
-      }
+        const query = textFromSlash.slice(1); // remove the '/' prefix
 
-      update.view.dispatch({
-        effects: updateSlashQuery.of({ to: line.to, query }),
-      });
+        // Close if user typed a space (they're just writing a normal /)
+        if (query.includes(' ')) {
+          view.dispatch({ effects: closeSlashMenu.of(undefined) });
+          return;
+        }
+
+        view.dispatch({
+          effects: updateSlashQuery.of({ to: line.to, query }),
+        });
+      }, 0);
     }
   }
 );
 
-// ─── Keymap for slash trigger + menu navigation ──────────────────────────────
+// ─── Keymap for menu navigation ──────────────────────────────────────────────
 
 export const slashCommandKeymap = keymap.of([
-  {
-    key: '/',
-    run(view: EditorView) {
-      const sel = view.state.selection.main;
-      if (!sel.empty) return false;
-
-      // Don't activate inside code blocks
-      if (isInCodeBlock(view.state, sel.head)) return false;
-
-      const line = view.state.doc.lineAt(sel.head);
-      const textBefore = view.state.sliceDoc(line.from, sel.head);
-
-      // Only activate if at start of line (optionally preceded by whitespace)
-      if (textBefore.trim() !== '') return false;
-
-      // Insert the '/' character
-      const from = sel.head;
-      view.dispatch({
-        changes: { from, to: from, insert: '/' },
-        selection: { anchor: from + 1 },
-        effects: openSlashMenu.of({ from, to: from + 1 }),
-      });
-      return true;
-    },
-  },
   {
     key: 'ArrowDown',
     run(view: EditorView) {
@@ -579,6 +611,7 @@ export const slashCommandKeymap = keymap.of([
 
 export const slashCommandExtensions = [
   slashMenuState,
+  slashInputHandler,
   slashCommandKeymap,
   slashMenuPlugin,
   placeholderPlugin,
