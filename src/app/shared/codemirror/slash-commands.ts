@@ -374,7 +374,7 @@ class PlaceholderWidget extends WidgetType {
   override toDOM(): HTMLElement {
     const span = document.createElement('span');
     span.className = 'cm-slash-placeholder';
-    span.textContent = "Tapez '/' pour les commandes...";
+    span.textContent = "Tapez '/' pour voir les commandes...";
     return span;
   }
 
@@ -397,7 +397,7 @@ function buildPlaceholderDecorations(view: EditorView): DecorationSet {
     return Decoration.set([
       Decoration.widget({
         widget: new PlaceholderWidget(),
-        side: 0,
+        side: 1,
       }).range(cursorLine.from),
     ]);
   }
