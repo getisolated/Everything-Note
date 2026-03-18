@@ -152,4 +152,8 @@ html, body {
   font-size: 14px;
   pointer-events: none;
   user-select: none;
+  display: inline-block;
+  width: 0;
+  overflow: visible;
+  white-space: nowrap;
 }
