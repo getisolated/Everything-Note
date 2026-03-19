@@ -23,7 +23,7 @@ body:
       description: Pourquoi cette fonctionnalité serait utile ? Quel problème résout-elle ?
       placeholder: "Ex : Actuellement il n'y a pas de moyen visuel de formater le texte sans connaître les raccourcis..."
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: solution
