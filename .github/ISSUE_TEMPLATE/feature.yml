@@ -1,0 +1,51 @@
+name: "Nouvelle fonctionnalité"
+description: "Proposer une nouvelle fonctionnalité ou amélioration"
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de proposer une amélioration pour Everything Note !
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Décris la fonctionnalité que tu souhaites voir ajoutée.
+      placeholder: "Ex : Ajouter un mode sombre alternatif avec des couleurs plus chaudes..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Pourquoi cette fonctionnalité serait utile ? Quel problème résout-elle ?
+      placeholder: "Ex : Actuellement il n'y a pas de moyen visuel de formater le texte sans connaître les raccourcis..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution envisagée
+      description: Si tu as une idée de comment implémenter cette fonctionnalité, décris-la ici.
+      placeholder: "Ex : Un composant Angular qui écoute les changements de sélection CodeMirror..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considérées
+      description: As-tu envisagé d'autres approches ?
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte additionnel
+      description: Screenshots, mockups, liens vers des exemples d'autres apps, etc.
+    validations:
+      required: false

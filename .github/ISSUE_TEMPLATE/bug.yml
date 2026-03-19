@@ -1,0 +1,72 @@
+name: "Rapport de bug"
+description: "Signaler un comportement inattendu ou une erreur"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de signaler ce bug ! Remplis le formulaire ci-dessous pour nous aider à le reproduire.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du bug
+      description: Décris clairement le comportement inattendu.
+      placeholder: "Ex : Quand je clique sur le bouton Bold, le curseur saute à la fin du document..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      description: Liste les étapes exactes pour reproduire le bug.
+      placeholder: |
+        1. Ouvrir une note existante
+        2. Sélectionner du texte
+        3. Appuyer sur Ctrl+B
+        4. Observer que...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+      description: Que devrait-il se passer normalement ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportement actuel
+      description: Que se passe-t-il à la place ?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Version de l'application (visible dans le titre de la fenêtre ou package.json)
+      placeholder: "Ex : 0.0.9"
+    validations:
+      required: false
+
+  - type: input
+    id: os
+    attributes:
+      label: Système d'exploitation
+      description: "OS et version"
+      placeholder: "Ex : Windows 11 23H2"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte additionnel
+      description: Screenshots, logs de la console, contenu de la note qui pose problème, etc.
+    validations:
+      required: false
