@@ -5,7 +5,6 @@ import {
 
 import { TabsService } from '../../core/services/tabs.service';
 import { ElectronBridgeService } from '../../core/services/electron-bridge.service';
-import { PaletteService } from '../../core/services/palette.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { SidebarStateService } from '../../core/services/sidebar-state.service';
@@ -93,16 +92,9 @@ import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-men
         }
       </div>
 
-      <!-- Search icon -->
-      <button class="search-icon-btn" (click)="openSearch()" (dblclick)="$event.stopPropagation()" [title]="'Search notes (' + shortcutLabel('search.global') + ')'">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-      </button>
-
       <!-- Wide mode toggle -->
       <button
-        class="search-icon-btn"
+        class="titlebar-icon-btn"
         (click)="toggleWideMode()"
         (dblclick)="$event.stopPropagation()"
         [title]="(wideMode() ? 'Centered layout (' : 'Full width layout (') + shortcutLabel('layout.toggle') + ')'"
@@ -156,7 +148,6 @@ import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-men
 export class TabsBarComponent {
   private tabs$ = inject(TabsService);
   private electron = inject(ElectronBridgeService);
-  private palette = inject(PaletteService);
   private layout = inject(LayoutService);
   private settings = inject(SettingsService);
   private sidebarState = inject(SidebarStateService);
@@ -180,7 +171,6 @@ export class TabsBarComponent {
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   goHome(): void { this.tabs$.goHome(); }
-  openSearch(): void { this.palette.open('search'); }
   selectTab(index: number): void { this.tabs$.setActiveIndex(index); }
   toggleWideMode(): void { this.layout.toggle(); }
 

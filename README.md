@@ -26,6 +26,7 @@ A fast, keyboard-driven note-taking desktop app built with Angular, Electron, an
 - **Settings editor** — VS Code-like modal (`Ctrl+,`) with search, categories and reset to default
 - **Light & dark themes** — dark by default; **Settings → Appearance → Theme** (Dark / Light / System, following the OS) or the `Ctrl+K Ctrl+T` chord to flip. Every color is a CSS variable `--evn-*` defined per `data-theme` in `src/styles.scss` (the editor syntax colors too, so CodeMirror needs no per-theme extension): a new theme = a new `:root[data-theme='…']` block. The choice lives in `settings.json` and is mirrored in localStorage so an inline script in `index.html` applies it before the first paint. The quick-note overlay keeps its own dark translucent look
 - **Formatting bar** — Word-like toolbar (styles, bold/italic/strike/code, blocks, lists) between the tabs and the editor, buttons reflect the formatting under the caret (read from the syntax tree) and never steal the editor focus. `Alt+T` toggles it; **Settings → Formatting Bar** turns it off for good and sets its size (Full / Compact), style (Pinned / Floating) and position (Top / Bottom)
+- **Find & replace** — `Ctrl+F` / `Ctrl+H` open a panel in the right column (in place of the outline while open, like Word): match case / whole word / regular expression toggles (`Alt+C` / `Alt+W` / `Alt+R`), `3 of 12` counter, icon buttons, and the list of every match with its line and context (click to jump). `Enter` / `Shift+Enter` go to the next / previous match, `Enter` in the replace field replaces, `Ctrl+Alt+Enter` replaces all, `Escape` closes. CodeMirror's search state drives it (highlights, commands); its native panel is hidden
 - **Keyboard-first** — every action has a shortcut (see below)
 - **Local storage** — all data stays on your machine in a SQLite database
 
@@ -89,7 +90,8 @@ Every in-app shortcut below is a default and can be rebound in **Settings → Ke
 | `Ctrl+Shift+E` | Toggle sidebar |
 | `Ctrl+K` `Ctrl+T` (chord) | Toggle light / dark theme |
 | `Ctrl+W` | Close tab |
-| `Ctrl+F` | Find in editor |
+| `Ctrl+F` | Find in the note (panel on the right, with the list of matches) |
+| `Ctrl+H` | Find & replace in the note |
 | `Ctrl+Shift+F` | Search all notes |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | Next / previous tab |
 | `Ctrl+S` | Save note |

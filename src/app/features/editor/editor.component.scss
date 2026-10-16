@@ -28,56 +28,9 @@
       height: 100%;
     }
 
-    // Search panel
-    .cm-search {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 100;
-      padding: 8px 12px;
-      border-radius: 6px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      input {
-        background: var(--evn-bg);
-        border: 1px solid var(--evn-border);
-        border-radius: 3px;
-        color: var(--evn-text);
-        padding: 3px 8px;
-        font-size: 13px;
-        outline: none;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-
-        &:focus {
-          border-color: var(--evn-accent);
-        }
-      }
-
-      button {
-        background: transparent;
-        border: 1px solid var(--evn-border);
-        border-radius: 3px;
-        color: var(--evn-text-dimmed);
-        padding: 3px 8px;
-        font-size: 12px;
-        cursor: pointer;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        transition: background 0.1s, color 0.1s;
-
-        &:hover {
-          background: rgba(var(--evn-hover-rgb), 0.06);
-          color: var(--evn-text);
-        }
-      }
-
-      .cm-search-label {
-        color: var(--evn-text-dimmed);
-        font-size: 12px;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-      }
+    // Only CodeMirror's hidden search panel lives there (see hiddenSearchPanel): no empty bar under the text
+    .cm-panels {
+      display: none;
     }
 
     // Highlight matches
@@ -91,6 +44,13 @@
       background: rgba(255, 213, 0, 0.4);
     }
   }
+}
+
+// ── Right column: find panel ──────────────────────────────────────────────────
+app-find-panel {
+  flex: 0 0 280px;
+  width: 280px;
+  margin-left: 8px;
 }
 
 // ── Table of contents ─────────────────────────────────────────────────────────

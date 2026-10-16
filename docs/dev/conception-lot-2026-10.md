@@ -54,7 +54,7 @@ Justification des regroupements non évidents :
 
 `DEFAULT_SETTINGS.showLineNumbers` et `showOutline` passent à `false`. Pas de migration : les utilisateurs existants gardent leur valeur.
 
-## 3. Retirer la loupe de la titlebar 🟢
+## 3. Retirer la loupe de la titlebar ✅
 
 Supprimer le bouton loupe de [tabs-bar.component.ts](../../src/app/features/tabs/tabs-bar.component.ts) (+ styles). Le raccourci `search.global` reste. Le 2ᵉ bouton portant la classe `search-icon-btn` (toggle « wide mode ») est conservé, classe renommée en `titlebar-icon-btn`.
 
@@ -99,7 +99,7 @@ On garde `'compact' | 'full'`, défaut `full`. Pur CSS, pas de migration.
 - Pas d'autres regroupements en menus pour l'instant (retour de test attendu).
 - Insertion de dessin : traitée avec #18.
 
-## 10. Recherche / remplacement 🟢
+## 10. Recherche / remplacement ✅
 
 **Problèmes actuels** : panneau CodeMirror natif en bas, Replace toujours visible, labels mal alignés, pas de Ctrl+H.
 

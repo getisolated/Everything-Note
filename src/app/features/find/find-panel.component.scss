@@ -1,0 +1,195 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 12px 12px 4px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--evn-text);
+}
+
+// ── Fields: one grid column for the expander, one for the inputs, so both rows line up ──
+.find-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.find-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 4px;
+}
+
+// Without replace (read-only note) there is no expander: the field takes the whole row
+:host(.read-only) .find-row { grid-template-columns: 1fr; }
+:host(.read-only) .find-toolbar { padding-left: 0; }
+
+.field {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  min-width: 0;
+  padding: 0 2px 0 8px;
+  background: var(--evn-bg-input);
+  border: 1px solid var(--evn-border-soft);
+  border-radius: 4px;
+  transition: border-color 0.12s;
+
+  &:focus-within { border-color: var(--evn-accent); }
+  &.invalid { border-color: var(--evn-danger); }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--evn-text);
+    font: inherit;
+    line-height: 26px;
+
+    &::placeholder { color: var(--evn-text-dimmed); }
+  }
+}
+
+.toggles {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+// ── Icon buttons ──
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--evn-text-soft);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover:not(:disabled) {
+    background: rgba(var(--evn-hover-rgb), 0.08);
+    color: var(--evn-text);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &.toggle {
+    width: 22px;
+    height: 22px;
+
+    &.on {
+      background: rgba(var(--evn-accent-strong-rgb), 0.3);
+      border-color: var(--evn-accent);
+      color: var(--evn-text-bright);
+    }
+  }
+
+  &.expander svg { transition: transform 0.12s; }
+  &.expander.expanded svg { transform: rotate(90deg); }
+}
+
+.expander-spacer { width: 22px; }
+
+// ── Count + actions ──
+.find-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-left: 26px;
+}
+
+.count {
+  font-size: 12px;
+  color: var(--evn-text-dimmed);
+  white-space: nowrap;
+
+  &.empty { color: var(--evn-danger); }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  background: var(--evn-border);
+}
+
+// ── Results ──
+.results {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--evn-scrollbar) transparent;
+}
+
+.result {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  color: var(--evn-text-soft);
+  cursor: pointer;
+
+  &:hover { background: rgba(var(--evn-hover-rgb), 0.05); }
+
+  &.current {
+    background: var(--evn-bg-active);
+    border-left-color: var(--evn-accent);
+    color: var(--evn-text);
+  }
+
+  mark {
+    background: rgba(255, 213, 0, 0.3);
+    color: inherit;
+    border-radius: 2px;
+  }
+}
+
+.result-line {
+  flex-shrink: 0;
+  min-width: 22px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--evn-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.result-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
