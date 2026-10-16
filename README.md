@@ -20,7 +20,7 @@ A fast, keyboard-driven note-taking desktop app built with Angular, Electron, an
 - **Folders** — nested folders in a VS Code-like tree sidebar (collapsible, resizable, `Ctrl+Shift+E` to toggle): create / rename / delete, drag & drop notes and folders (drop on a folder to move into it, between two rows to position it: an insertion line shows where), note count per folder. Notes created on the fly land in the undeletable `Inbox` folder; the first-launch sample notes live in `Getting started`. 3-4 levels deep are recommended (a warning is shown beyond)
 - **Backlinks & graph** — link notes with `[label](Folder/Note title)` (path autocompletion once `](` is typed, like in a code editor) or `note://ID` (palette: `Copy Note Link`). A collapsible panel under the editor lists the notes linking to the active one, with the surrounding text. The home page draws an Obsidian-like graph of the links (canvas + d3-force): zoom, pan, drag nodes, click to open, active note highlighted, orphans on the outer ring, dashed nodes/links for deleted notes, filtered by the folder selected in the sidebar; above 500 notes it is limited to 2 links around the active note. Switch to the plain list with the `Graph / List` toggle. Links render as their label once the caret leaves them; `Ctrl+click` follows them (note, or web address in the browser). Settings: line numbers and word wrap
 - **Tag system** — organize notes with tags, filter from the sidebar
-- **Quick-note overlay** — a global shortcut (default `Ctrl+Alt+N`, configurable) pops a small translucent, always-on-top chat-like window anywhere on screen; notes sent from it are tagged `overlay` and appear in the app
+- **Quick-note overlay** — a global shortcut (default `Ctrl+Alt+N`, configurable) pops a small translucent, always-on-top chat-like window anywhere on screen; notes sent from it are tagged `quick-note` and gathered in the app in a single *Quick notes* document (sidebar entry, palette). Hovering a note shows Discord-like actions: copy, edit in place (`Escape` cancels, `Ctrl+Enter` or leaving the editor saves) and delete
 - **System tray** — closing the window keeps the app running in the tray (right-click > Quit to exit); optional launch at Windows startup
 - **Auto-update** — the app checks the latest GitHub release at startup then hourly (packaged Windows build only) and offers the update in a popup, with an entry in the sidebar above Settings; the installer is SHA-512 verified. The `Automatic Updates` setting downloads in the background and installs when the app closes. Releases (tags `v*`) publish a `latest.json` manifest next to the installer
 - **Settings editor** — VS Code-like modal (`Ctrl+,`) with search, categories and reset to default
@@ -66,7 +66,7 @@ src/app/
     editor/          # CodeMirror markdown editor with auto-save
     backlinks/       # Backlinks panel under the editor
     graph/           # Graph view (home page)
-    sidebar/         # Folder tree (drag & drop, inline rename, context menu), overlay notes, tags, settings button
+    sidebar/         # Folder tree (drag & drop, inline rename, context menu), quick notes, tags, settings button
     home/            # Note list of the selected folder / tag, context menu
     tabs/            # Tab bar with drag & drop, pinning, window controls
     palette/         # Command/search/tag palette (F1 / Ctrl+Shift+F)

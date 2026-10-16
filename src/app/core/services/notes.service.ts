@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Note, NotePreview } from '../models/note.model';
-import { OVERLAY_NOTE_TAG } from '../models/settings.model';
+import { QUICK_NOTE_TAG } from '../models/settings.model';
 import { joinBlocks, TimestampedBlock } from '../../shared/codemirror/note-timestamps';
 import { extractNoteTitle } from '../utils/note-title.util';
 import { formatNoteTimestamp } from '../utils/note-timestamp.util';
@@ -33,19 +33,19 @@ export class NotesService {
   );
 
   /** Notes sent from the quick-note overlay, oldest first. */
-  readonly overlayNotes = computed<Note[]>(() =>
+  readonly quickNotes = computed<Note[]>(() =>
     this._notes()
-      .filter(n => n.tags.includes(OVERLAY_NOTE_TAG))
+      .filter(n => n.tags.includes(QUICK_NOTE_TAG))
       .sort((a, b) => a.id - b.id)
   );
 
-  /** Overlay notes as the blocks of one document (trimmed text + timestamp label), oldest first. */
-  readonly overlayNoteBlocks = computed<TimestampedBlock[]>(() =>
-    this.overlayNotes().map(n => ({ text: n.content.trim(), label: formatNoteTimestamp(n.createdAt) }))
+  /** Quick notes as the blocks of one document (trimmed text + timestamp label), oldest first. */
+  readonly quickNoteBlocks = computed<TimestampedBlock[]>(() =>
+    this.quickNotes().map(n => ({ id: n.id, text: n.content.trim(), label: formatNoteTimestamp(n.createdAt) }))
   );
 
-  /** All overlay notes as one document: one blank line between two notes. */
-  readonly overlayNotesDocument = computed<string>(() => joinBlocks(this.overlayNoteBlocks()));
+  /** All quick notes as one document: one blank line between two notes. */
+  readonly quickNotesDocument = computed<string>(() => joinBlocks(this.quickNoteBlocks()));
 
   async loadAll(): Promise<void> {
     const notes = await this.bridge.getAllNotes();

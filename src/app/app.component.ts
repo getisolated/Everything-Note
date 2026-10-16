@@ -23,7 +23,7 @@ import { UpdateService } from './core/services/update.service';
 import { FormattingBarService } from './core/services/formatting-bar.service';
 import { ThemeService } from './core/services/theme.service';
 import { ConfirmDialogAction, ConfirmDialogComponent } from './shared/ui/confirm-dialog.component';
-import { OVERLAY_NOTES_TAB_ID } from './core/models/note.model';
+import { QUICK_NOTES_TAB_ID } from './core/models/note.model';
 import { GETTING_STARTED_FOLDER_NAME } from './core/models/folder.model';
 import { SAMPLE_NOTES } from './core/data/sample-notes';
 import { findSampleNotesToGather } from './core/utils/sample-notes.util';
@@ -132,10 +132,10 @@ export class AppComponent implements OnInit, OnDestroy {
   /** Only worth its room when there is a note to format (not on the home page). */
   readonly formattingBarShown = computed(() => this.formattingBar.visible() && this.activeNoteId() !== null);
 
-  /** The read-only overlay notes document has no identity of its own to be linked to. */
+  /** The read-only quick notes document has no identity of its own to be linked to. */
   readonly backlinksShown = computed(() => {
     const id = this.activeNoteId();
-    return id !== null && id !== OVERLAY_NOTES_TAB_ID;
+    return id !== null && id !== QUICK_NOTES_TAB_ID;
   });
 
   /** Popup offering the update found by the main process; null when closed. */

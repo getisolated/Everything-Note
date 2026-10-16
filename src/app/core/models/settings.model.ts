@@ -64,4 +64,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   showOutline: true,
 };
 
-export const OVERLAY_NOTE_TAG = 'overlay';
+/** Tag of the notes sent from the quick-note overlay (formerly `overlay`, migrated by the main process). */
+export const QUICK_NOTE_TAG = 'quick-note';

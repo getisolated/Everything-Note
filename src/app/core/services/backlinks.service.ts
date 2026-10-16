@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { OVERLAY_NOTES_TAB_ID } from '../models/note.model';
-import { OVERLAY_NOTE_TAG } from '../models/settings.model';
+import { QUICK_NOTES_TAB_ID } from '../models/note.model';
+import { QUICK_NOTE_TAG } from '../models/settings.model';
 import { Backlink, buildNoteGraph, findBacklinks, NoteGraph } from '../utils/note-links.util';
 import { createLinkResolver } from '../utils/note-paths.util';
 import { FoldersService } from './folders.service';
@@ -31,15 +31,15 @@ export class BacklinksService {
     effect(() => {
       const activeId = this.tabs.activeNoteId();
 
-      if (activeId !== null && activeId !== OVERLAY_NOTES_TAB_ID) {
+      if (activeId !== null && activeId !== QUICK_NOTES_TAB_ID) {
         this.lastActiveId.set(activeId);
       }
     });
   }
 
-  /** Overlay notes live together in their own document: they are neither linked nor drawn. */
+  /** Quick notes live together in their own document: they are neither linked nor drawn. */
   private readonly linkableNotes = computed(() =>
-    this.notes.notes().filter(n => !n.tags.includes(OVERLAY_NOTE_TAG))
+    this.notes.notes().filter(n => !n.tags.includes(QUICK_NOTE_TAG))
   );
 
   /** Resolves `[label](Folder/Note title)` links; follows the renames and moves. */
@@ -48,7 +48,7 @@ export class BacklinksService {
   /** Notes linking to the active one; follows the active tab and the edits. */
   readonly backlinks = computed<Backlink[]>(() => {
     const activeId = this.tabs.activeNoteId();
-    return activeId === null || activeId === OVERLAY_NOTES_TAB_ID ? [] : findBacklinks(this.linkableNotes(), activeId, this.resolver());
+    return activeId === null || activeId === QUICK_NOTES_TAB_ID ? [] : findBacklinks(this.linkableNotes(), activeId, this.resolver());
   });
 
   /** Graph of the folder selected in the sidebar (everything when none is). */

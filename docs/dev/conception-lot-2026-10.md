@@ -58,18 +58,18 @@ Justification des regroupements non évidents :
 
 Supprimer le bouton loupe de [tabs-bar.component.ts](../../src/app/features/tabs/tabs-bar.component.ts) (+ styles). Le raccourci `search.global` reste. Le 2ᵉ bouton portant la classe `search-icon-btn` (toggle « wide mode ») est conservé, classe renommée en `titlebar-icon-btn`.
 
-## 4. Renommer « overlay notes » → « quick notes » 🟢
+## 4. Renommer « overlay notes » → « quick notes » ✅
 
 - Libellés UI : sidebar, onglet, palette (`Overlay Notes` → `Quick Notes`), README.
 - Code : `OVERLAY_NOTES_TAB_ID` → `QUICK_NOTES_TAB_ID`, `overlayNotes*` → `quickNotes*`. L'id `-1` est conservé, donc les onglets persistés restent valides.
 - Tag en base : migration idempotente au démarrage `overlay` → `quick-note`.
 - La fenêtre flottante reste « overlay » (nom de la fenêtre) ; seules les *notes* changent de nom.
 
-## 5. Pas de sommaire dans les quick notes 🟢
+## 5. Pas de sommaire dans les quick notes ✅
 
 Masquer le panneau outline quand la note active est le document quick notes.
 
-## 6. Quick notes éditables dans l'app centrale 🟢
+## 6. Quick notes éditables dans l'app centrale ✅
 
 Le document reste une **concaténation** de N notes (une par bloc, en-tête timestamp via `note-timestamps.ts`), chaque bloc étant mappé à l'id de sa note (`RangeSet` maintenu à travers les transactions).
 

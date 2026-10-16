@@ -10,7 +10,7 @@ import { HomeView, LayoutService } from '../../core/services/layout.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { NotePreview } from '../../core/models/note.model';
 import { parseNoteDate } from '../../core/utils/note-timestamp.util';
-import { OVERLAY_NOTE_TAG } from '../../core/models/settings.model';
+import { QUICK_NOTE_TAG } from '../../core/models/settings.model';
 import { GraphViewComponent } from '../graph/graph-view.component';
 import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-menu/context-menu.component';
 
@@ -116,9 +116,9 @@ export class HomeComponent {
     const tag = this.sidebarState.activeTag();
     const folderId = this.sidebarState.selectedFolderId();
     const previews = this.notesService.notePreviews();
-    // Overlay notes are not listed one by one: they live together in the "Overlay notes" document
+    // Quick notes are not listed one by one: they live together in the "Quick notes" document
     return previews.filter(n =>
-      !n.tags.includes(OVERLAY_NOTE_TAG)
+      !n.tags.includes(QUICK_NOTE_TAG)
       && (folderId === null || n.folderId === folderId)
       && (!tag || n.tags.includes(tag))
     );

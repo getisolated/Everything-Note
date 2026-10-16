@@ -146,15 +146,15 @@
 </div>
 
 <!-- Outside of the tree: notes sent from the quick-note overlay -->
-@if (overlayNotesCount() > 0) {
+@if (quickNotesCount() > 0) {
   <div class="section">
-    <div class="row overlay-notes" tabindex="0" (click)="openOverlayNotes()" (keydown.enter)="openOverlayNotes()">
+    <div class="row quick-notes" tabindex="0" (click)="openQuickNotes()" (keydown.enter)="openQuickNotes()">
       <span class="chevron-space"></span>
       <svg class="row-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
       </svg>
-      <span class="row-label">Overlay notes</span>
-      <span class="count">{{ overlayNotesCount() }}</span>
+      <span class="row-label">Quick notes</span>
+      <span class="count">{{ quickNotesCount() }}</span>
     </div>
   </div>
 }

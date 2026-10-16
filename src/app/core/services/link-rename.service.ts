@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { OVERLAY_NOTE_TAG } from '../models/settings.model';
+import { QUICK_NOTE_TAG } from '../models/settings.model';
 import { retargetNoteLinks } from '../utils/note-links.util';
 import { notePath, toPathSegment } from '../utils/note-paths.util';
 import { FoldersService } from './folders.service';
@@ -51,7 +51,7 @@ export class LinkRenameService {
   private async rewriteLinks(noteId: number, fromTitle: string): Promise<void> {
     const renamed = this.notes.notes().find(n => n.id === noteId);
 
-    if (!renamed || renamed.tags.includes(OVERLAY_NOTE_TAG)) {
+    if (!renamed || renamed.tags.includes(QUICK_NOTE_TAG)) {
       return;
     }
 
@@ -67,7 +67,7 @@ export class LinkRenameService {
     const segment = toPathSegment(fromTitle).toLowerCase();
     const encodedSegment = encodeURIComponent(toPathSegment(fromTitle)).toLowerCase();
     const candidates = this.notes.notes().filter(n => {
-      if (n.id === noteId || n.tags.includes(OVERLAY_NOTE_TAG)) {
+      if (n.id === noteId || n.tags.includes(QUICK_NOTE_TAG)) {
         return false;
       }
 

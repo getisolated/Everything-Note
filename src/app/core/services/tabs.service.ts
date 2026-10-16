@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { OVERLAY_NOTES_TAB_ID, Tab } from '../models/note.model';
+import { QUICK_NOTES_TAB_ID, QUICK_NOTES_TITLE, Tab } from '../models/note.model';
 import { closeTabsWhere, TabsAfterClosing } from '../utils/tabs-closing.util';
 
 const SESSION_KEY = 'evnote-session';
@@ -40,8 +40,9 @@ export class TabsService {
       if (raw) {
         const parsed = JSON.parse(raw) as { tabs: Tab[]; activeIndex: number };
         const validTabs = parsed.tabs
-          .filter(t => validNoteIds.has(t.noteId) || t.noteId === OVERLAY_NOTES_TAB_ID)
-          .map(t => ({ ...t, isPinned: t.isPinned ?? false }));
+          .filter(t => validNoteIds.has(t.noteId) || t.noteId === QUICK_NOTES_TAB_ID)
+          // Sessions saved before the rename still say "Overlay notes"
+          .map(t => ({ ...t, isPinned: t.isPinned ?? false, title: t.noteId === QUICK_NOTES_TAB_ID ? QUICK_NOTES_TITLE : t.title }));
         if (validTabs.length > 0) {
           this._tabs.set(validTabs);
           const clamped = Math.min(Math.max(parsed.activeIndex, -1), validTabs.length - 1);
@@ -78,8 +79,8 @@ export class TabsService {
     this.persist();
   }
 
-  openOverlayNotes(): void {
-    this.openNote(OVERLAY_NOTES_TAB_ID, 'Overlay notes');
+  openQuickNotes(): void {
+    this.openNote(QUICK_NOTES_TAB_ID, QUICK_NOTES_TITLE);
   }
 
   closeTab(index: number): void {

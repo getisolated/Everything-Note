@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { OverlayBackdrop } from '../../core/models/overlay-backdrop.model';
 import { formatNoteTimestamp } from '../../core/utils/note-timestamp.util';
 import { Note } from '../../core/models/note.model';
-import { OVERLAY_NOTE_TAG } from '../../core/models/settings.model';
+import { QUICK_NOTE_TAG } from '../../core/models/settings.model';
 import { ElectronBridgeService } from '../../core/services/electron-bridge.service';
 import { NotesService } from '../../core/services/notes.service';
 import { SettingsService } from '../../core/services/settings.service';
@@ -148,12 +148,12 @@ export class OverlayComponent implements OnInit, OnDestroy {
     this.draft.set('');
     this.resizeInput();
 
-    const note = await this.bridge.createNote(this.notesService.extractTitle(text), text, [OVERLAY_NOTE_TAG]);
+    const note = await this.bridge.createNote(this.notesService.extractTitle(text), text, [QUICK_NOTE_TAG]);
     this.messages.update(list => [...list, { note, fresh: true }].slice(-MAX_DISPLAYED_NOTES));
   }
 
   private async loadMessages(): Promise<void> {
-    const notes = await this.bridge.getNotesByTag(OVERLAY_NOTE_TAG);
+    const notes = await this.bridge.getNotesByTag(QUICK_NOTE_TAG);
     const recent = notes.sort((a, b) => a.id - b.id).slice(-MAX_DISPLAYED_NOTES);
     this.messages.set(recent.map(note => ({ note, fresh: false })));
   }

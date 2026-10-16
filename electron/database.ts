@@ -90,6 +90,7 @@ export function initDatabase(): void {
   `);
 
   migrateNotesFolderColumn();
+  migrateQuickNoteTag();
 
   // Cache prepared statements after schema is ready
   stmts = {
@@ -141,6 +142,36 @@ function migrateNotesFolderColumn(): void {
   addColumnIfMissing('folders', 'sort_order', 'INTEGER');
 
   db.exec('CREATE INDEX IF NOT EXISTS idx_notes_folder_id ON notes(folder_id)');
+}
+
+/** Tag of the notes sent from the quick-note overlay (QUICK_NOTE_TAG on the renderer side), and its former name. */
+const QUICK_NOTE_TAG = 'quick-note';
+const LEGACY_QUICK_NOTE_TAG = 'overlay';
+
+/** The overlay notes became "quick notes": their tag follows. Idempotent: nothing is left to rename the next time. */
+function migrateQuickNoteTag(): void {
+  const legacy = db.prepare(`SELECT id, tags FROM notes WHERE tags LIKE ?`).all(`%"${LEGACY_QUICK_NOTE_TAG}"%`) as { id: number; tags: string }[];
+  const update = db.prepare('UPDATE notes SET tags = ? WHERE id = ?');
+
+  db.transaction(() => {
+    for (const { id, tags } of legacy) {
+      update.run(JSON.stringify(renameTag(parseTags(tags), LEGACY_QUICK_NOTE_TAG, QUICK_NOTE_TAG)), id);
+    }
+  })();
+}
+
+function parseTags(raw: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((tag): tag is string => typeof tag === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Tags with `from` renamed to `to`, without duplicating `to` when it is already there. */
+export function renameTag(tags: string[], from: string, to: string): string[] {
+  return [...new Set(tags.map(tag => (tag === from ? to : tag)))];
 }
 
 /** The default folder must always exist: the notes created on the fly land in it. */
