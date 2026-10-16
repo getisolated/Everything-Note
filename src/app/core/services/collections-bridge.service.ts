@@ -26,6 +26,7 @@ interface CollectionsApi {
   revealCollectionPath: (root: string, path: string) => Promise<boolean>;
   searchCollections: (query: string) => Promise<number>;
   cancelCollectionSearch: (requestId: number) => Promise<boolean>;
+  requestCollectionGraph: (root: string) => Promise<boolean>;
   getPathForFile: (file: File) => string;
   onCollectionsEvent: (callback: (event: CollectionsEvent) => void) => () => void;
   onCollectionsOpen: (callback: (refs: CollectionFileRef[]) => void) => () => void;
@@ -52,6 +53,7 @@ export class CollectionsBridgeService {
   reveal(ref: CollectionFileRef): Promise<boolean> { return this.api?.revealCollectionPath(ref.root, ref.path) ?? Promise.resolve(false); }
   search(query: string): Promise<number> { return this.api?.searchCollections(query) ?? Promise.resolve(0); }
   cancelSearch(requestId: number): Promise<boolean> { return this.api?.cancelCollectionSearch(requestId) ?? Promise.resolve(false); }
+  requestGraph(root: string): Promise<boolean> { return this.api?.requestCollectionGraph(root) ?? Promise.resolve(false); }
   pathForFile(file: File): string | null { return this.api?.getPathForFile(file) || null; }
   onEvent(callback: (event: CollectionsEvent) => void): () => void { return this.api?.onCollectionsEvent(callback) ?? (() => undefined); }
   onOpen(callback: (refs: CollectionFileRef[]) => void): () => void { return this.api?.onCollectionsOpen(callback) ?? (() => undefined); }

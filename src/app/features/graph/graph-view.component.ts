@@ -10,6 +10,8 @@ import {
 import { BacklinksService } from '../../core/services/backlinks.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { FileDocsService } from '../../core/services/file-docs.service';
+import { CollectionsService } from '../../core/services/collections.service';
 import { NoteGraph } from '../../core/utils/note-links.util';
 
 interface SimNode extends SimulationNodeDatum {
@@ -81,7 +83,7 @@ function nodeRadius(degree: number): number {
       </div>
 
       @if (graph().nodes.length === 0) {
-        <div class="graph-empty">No notes to show.</div>
+        <div class="graph-empty">{{ collections.selectedRoot() !== null ? 'No markdown file to show.' : 'No notes to show.' }}</div>
       } @else {
         <div class="graph-legend">
           <span>{{ graph().nodes.length }} notes · {{ graph().links.length }} links</span>
@@ -97,6 +99,8 @@ function nodeRadius(degree: number): number {
 export class GraphViewComponent implements OnDestroy {
   protected readonly backlinks = inject(BacklinksService);
   private readonly tabs = inject(TabsService);
+  private readonly fileDocs = inject(FileDocsService);
+  protected readonly collections = inject(CollectionsService);
   private readonly theme = inject(ThemeService);
 
   protected readonly graph = this.backlinks.graph;
@@ -458,7 +462,18 @@ export class GraphViewComponent implements OnDestroy {
     node.fy = null;
 
     if (!this.moved && !node.missing) {
-      this.tabs.openNote(node.id, node.title);
+      this.open(node.id, node.title);
+    }
+  }
+
+  /** A node is a note, or a file of the collection whose graph is shown. */
+  private open(id: number, title: string): void {
+    const file = this.fileDocs.refFor(id);
+
+    if (file) {
+      this.collections.open(file);
+    } else {
+      this.tabs.openNote(id, title);
     }
   }
 

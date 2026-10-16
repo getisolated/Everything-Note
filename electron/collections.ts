@@ -311,6 +311,10 @@ export function searchCollections(query: unknown): number {
   return requestId;
 }
 
+export function requestCollectionGraph(root: unknown): void {
+  post({ type: 'graph', root: requireCollection(root).path });
+}
+
 export function cancelCollectionSearch(requestId: unknown): void {
   if (typeof requestId === 'number') {
     post({ type: 'cancelSearch', requestId });

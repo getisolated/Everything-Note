@@ -4,6 +4,7 @@ import { CollectionFileRef, CollectionNode, CollectionState } from '../../core/m
 import { CollectionsService } from '../../core/services/collections.service';
 import { FileDocsService } from '../../core/services/file-docs.service';
 import { TabsService } from '../../core/services/tabs.service';
+import { SidebarStateService } from '../../core/services/sidebar-state.service';
 import { baseName, parentPath } from '../../core/utils/collection.util';
 import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-menu/context-menu.component';
 import { ConfirmDialogAction, ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
@@ -63,6 +64,7 @@ function readSet(key: string): Set<string> {
               [attr.aria-selected]="false"
               [attr.aria-expanded]="row.state.collection.kind === 'folder' ? isExpanded(row.key) : null"
               [class.error]="row.state.status === 'error'"
+              [class.selected]="collections.selectedRoot() === row.state.collection.path && tabs.activeNoteId() === null"
               [class.loading]="row.state.status === 'loading'"
               [class.drop-target]="dropKey() === row.key"
               [title]="rootTitle(row.state)"
@@ -182,7 +184,8 @@ function readSet(key: string): Set<string> {
 export class CollectionsSectionComponent {
   protected readonly collections = inject(CollectionsService);
   private readonly fileDocs = inject(FileDocsService);
-  private readonly tabs = inject(TabsService);
+  protected readonly tabs = inject(TabsService);
+  private readonly sidebarState = inject(SidebarStateService);
 
   protected readonly iconFile = ICON_FILE;
   protected readonly trashActions: ConfirmDialogAction[] = [{ id: 'trash', label: 'Move to Recycle Bin', danger: true }];
@@ -282,9 +285,14 @@ export class CollectionsSectionComponent {
   protected onCollectionClick(state: CollectionState): void {
     if (state.collection.kind === 'file') {
       this.collections.open({ root: state.collection.path, path: baseName(state.collection.path) });
-    } else {
-      this.toggle(nodeKey(state.collection.path, ''));
+      return;
     }
+
+    // Like a folder of the notes: browsed on the home page (its graph), and expanded / collapsed
+    this.sidebarState.selectFolder(null);
+    this.collections.select(state.collection.path);
+    this.toggle(nodeKey(state.collection.path, ''));
+    this.tabs.goHome();
   }
 
   protected onNodeClick(root: string, node: CollectionNode): void {

@@ -34,7 +34,7 @@
 >
   <div
     class="row all-notes"
-    [class.selected]="selectedFolderId() === null && activeNoteId() === null"
+    [class.selected]="selectedFolderId() === null && activeNoteId() === null && !collectionSelected()"
     tabindex="0"
     (click)="selectAllNotes()"
     (keydown.enter)="selectAllNotes()"
@@ -51,7 +51,7 @@
     @if (row.kind === 'folder') {
       <div
         class="row folder"
-        [class.selected]="selectedFolderId() === row.node.folder.id && activeNoteId() === null"
+        [class.selected]="selectedFolderId() === row.node.folder.id && activeNoteId() === null && !collectionSelected()"
         [class.drop-target]="dropTarget() === row.node.folder.id"
         [style.padding-left.px]="8 + row.depth * 14"
         [style.--indent]="(24 + row.depth * 14) + 'px'"

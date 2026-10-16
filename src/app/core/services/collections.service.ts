@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
-  Collection, CollectionChange, CollectionFileRef, CollectionKind, CollectionNode, CollectionSearchHit, CollectionState,
-  CollectionsEvent,
+  Collection, CollectionChange, CollectionFileRef, CollectionGraph, CollectionKind, CollectionNode, CollectionSearchHit,
+  CollectionState, CollectionsEvent,
 } from '../models/collection.model';
 import { baseName, flattenFiles, labelCollections, movedPath, parentPath } from '../utils/collection.util';
 import { CollectionRow, CollectionsBridgeService } from './collections-bridge.service';
@@ -32,6 +32,8 @@ export class CollectionsService {
 
   private readonly raw = signal<RawState[]>([]);
   private readonly _lastChange = signal<CollectionChange | null>(null);
+  private readonly _selectedRoot = signal<string | null>(null);
+  private readonly _graphs = signal<ReadonlyMap<string, CollectionGraph>>(new Map());
   private search: RunningSearch | null = null;
   private started = false;
 
@@ -39,6 +41,17 @@ export class CollectionsService {
     const raw = this.raw();
     const labels = labelCollections(raw.map(state => state.collection));
     return raw.map((state, index) => ({ ...state, label: labels[index]?.label ?? state.collection.displayName, hint: labels[index]?.hint ?? null }));
+  });
+
+  /** Collection selected in the sidebar: the home page draws its graph instead of the notes'. */
+  readonly selectedRoot = this._selectedRoot.asReadonly();
+
+  readonly selectedState = computed(() => this.states().find(state => state.collection.path === this._selectedRoot()) ?? null);
+
+  /** Graph of the selected collection, once the worker has read its files. */
+  readonly selectedGraph = computed<CollectionGraph | null>(() => {
+    const root = this._selectedRoot();
+    return root === null ? null : this._graphs().get(root) ?? null;
   });
 
   /** Files modified on disk, as last reported: the editor reloads an open one. */
@@ -68,6 +81,15 @@ export class CollectionsService {
     this.raw.set(rows.map(row => previous.get(row.path) ?? { collection: toCollection(row), status: 'loading', tree: [], error: null, truncated: false }));
   }
 
+  /** Selects a collection (its graph shows on the home page); null goes back to the notes. */
+  select(root: string | null): void {
+    this._selectedRoot.set(root);
+
+    if (root !== null) {
+      void this.bridge.requestGraph(root);
+    }
+  }
+
   async add(kind: CollectionKind): Promise<void> {
     const rows = await this.bridge.pick(kind);
     await this.reload();
@@ -87,6 +109,10 @@ export class CollectionsService {
     await this.bridge.remove(root);
     this.fileDocs.idsUnder(root).forEach(id => this.tabs.closeByNoteId(id));
     this.raw.update(states => states.filter(state => state.collection.path !== root));
+
+    if (this._selectedRoot() === root) {
+      this._selectedRoot.set(null);
+    }
   }
 
   async rename(root: string, displayName: string): Promise<void> {
@@ -185,16 +211,29 @@ export class CollectionsService {
     switch (event.type) {
       case 'tree':
         this.updateState(event.root, state => ({ ...state, status: 'ready', tree: event.tree, error: null, truncated: event.truncated }));
+        this.refreshGraph(event.root);
         break;
       case 'error':
         this.updateState(event.root, state => ({ ...state, status: 'error', tree: [], error: event.message }));
         break;
       case 'changed':
         this._lastChange.set({ root: event.root, paths: event.paths });
+        // An edited file may have gained or lost links
+        this.refreshGraph(event.root);
+        break;
+      case 'graph':
+        this._graphs.update(graphs => new Map(graphs).set(event.root, event.graph));
         break;
       case 'searchResults':
         this.onSearchResults(event);
         break;
+    }
+  }
+
+  /** Only the selected collection's graph is kept up to date: reading every file of every collection is wasted. */
+  private refreshGraph(root: string): void {
+    if (this._selectedRoot() === root) {
+      void this.bridge.requestGraph(root);
     }
   }
 

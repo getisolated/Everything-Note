@@ -3,6 +3,7 @@ import {
 } from '@angular/core';
 
 import { FoldersService } from '../../core/services/folders.service';
+import { CollectionsService } from '../../core/services/collections.service';
 import { SidebarStateService } from '../../core/services/sidebar-state.service';
 import { NotesService } from '../../core/services/notes.service';
 import { TabsService } from '../../core/services/tabs.service';
@@ -99,12 +100,19 @@ export class HomeComponent {
   private tabsService = inject(TabsService);
   private foldersService = inject(FoldersService);
   private sidebarState = inject(SidebarStateService);
+  private readonly collections = inject(CollectionsService);
   private layout = inject(LayoutService);
 
   readonly view = this.layout.homeView;
 
   /** The folder (and the tag) selected in the sidebar drive what is listed here. */
   readonly title = computed(() => {
+    const collection = this.collections.selectedState();
+
+    if (collection) {
+      return collection.label;
+    }
+
     const folderId = this.sidebarState.selectedFolderId();
     const tag = this.sidebarState.activeTag();
     const base = folderId === null ? 'All notes' : (this.foldersService.getById(folderId)?.name ?? 'All notes');

@@ -54,6 +54,7 @@ const api = {
   revealCollectionPath: (root: string, path: string) => ipcRenderer.invoke('collections:reveal', root, path),
   searchCollections: (query: string) => ipcRenderer.invoke('collections:search', query),
   cancelCollectionSearch: (requestId: number) => ipcRenderer.invoke('collections:cancelSearch', requestId),
+  requestCollectionGraph: (root: string) => ipcRenderer.invoke('collections:graph', root),
   /** Disk path of a file dropped on the window (File.path no longer exists in Electron). */
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
   onCollectionsEvent: (callback: (event: unknown) => void) => subscribe('collections:event', callback),

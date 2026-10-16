@@ -17,6 +17,7 @@ import { SettingsService } from '../../core/services/settings.service';
 import { SidebarStateService } from '../../core/services/sidebar-state.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { UpdateService } from '../../core/services/update.service';
+import { CollectionsService } from '../../core/services/collections.service';
 import {
   buildFolderTree,
   canMoveFolder,
@@ -58,6 +59,7 @@ export class SidebarComponent {
   private readonly palette = inject(PaletteService);
   private readonly settings = inject(SettingsService);
   private readonly updates = inject(UpdateService);
+  private readonly collections = inject(CollectionsService);
 
   protected readonly updateInfo = this.updates.info;
   protected readonly updateLabel = this.updates.label;
@@ -67,6 +69,7 @@ export class SidebarComponent {
   protected readonly selectedFolderId = this.state.selectedFolderId;
   protected readonly activeTag = this.state.activeTag;
   protected readonly activeNoteId = this.tabs.activeNoteId;
+  protected readonly collectionSelected = computed(() => this.collections.selectedRoot() !== null);
 
   // The overlay notes have their own entry, they never appear inside the tree
   private readonly treeNotes = computed<TreeNote[]>(() =>
@@ -230,11 +233,13 @@ export class SidebarComponent {
   // ── Selection ──────────────────────────────────────────────────────────────
 
   protected selectAllNotes(): void {
+    this.collections.select(null);
     this.state.selectFolder(null);
     this.tabs.goHome();
   }
 
   protected onFolderClick(node: FolderTreeNode): void {
+    this.collections.select(null);
     this.state.selectFolder(node.folder.id);
     this.state.toggleExpanded(node.folder.id);
     this.tabs.goHome();

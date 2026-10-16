@@ -158,3 +158,97 @@ export function findInText(content: string, query: string, limit: number): FileM
 
   return matches;
 }
+
+/** Inline markdown links `[label](target)` (images excluded); reference-style links are not followed. */
+const MARKDOWN_LINK = /(?<!!)\[[^\]\n]*\]\((?<target><[^>\n]+>|[^)\s]+)(?:\s+"[^"\n]*")?\)/g;
+
+/** Targets of the inline links of a markdown text, as written. */
+export function extractLinkTargets(content: string): string[] {
+  return [...content.matchAll(MARKDOWN_LINK)].map(match => match.groups?.['target'] ?? '').filter(Boolean);
+}
+
+/**
+ * Path (inside the collection) a relative link of `fromFile` designates; `null` for web addresses, anchors and paths
+ * leaving the collection. Mirrors resolveRelativeLink of collection.util.ts on the renderer side.
+ */
+export function resolveCollectionLink(fromFile: string, target: string): string | null {
+  let cleaned = target.trim().replace(/^<|>$/g, '').split('#')[0] ?? '';
+
+  try {
+    cleaned = decodeURIComponent(cleaned);
+  } catch {
+    // Not percent-encoded: kept as written
+  }
+
+  if (!cleaned || /^[a-z][a-z0-9+.-]*:/i.test(cleaned)) {
+    return null;
+  }
+
+  const directory = fromFile.includes('/') ? fromFile.slice(0, fromFile.lastIndexOf('/')) : '';
+  const segments = cleaned.startsWith('/') ? [] : directory.split('/').filter(Boolean);
+
+  for (const segment of cleaned.split('/')) {
+    if (segment === '..') {
+      if (segments.length === 0) {
+        return null;
+      }
+      segments.pop();
+    } else if (segment !== '.' && segment !== '') {
+      segments.push(segment);
+    }
+  }
+
+  const resolved = segments.join('/');
+  return /\.md$/i.test(resolved) ? resolved : `${resolved}.md`;
+}
+
+export interface CollectionGraphNode {
+  path: string;
+  degree: number;
+  /** Target of a link whose file does not exist. */
+  missing: boolean;
+}
+
+export interface CollectionGraph {
+  nodes: CollectionGraphNode[];
+  links: { source: string; target: string }[];
+}
+
+/** Graph of the links between the files of one collection (never across collections); duplicate links count once. */
+export function buildCollectionGraph(files: { path: string; content: string }[]): CollectionGraph {
+  const existing = new Map(files.map(file => [file.path.toLowerCase(), file.path]));
+  const degree = new Map<string, number>(files.map(file => [file.path, 0]));
+  const missing = new Set<string>();
+  const seen = new Set<string>();
+  const links: { source: string; target: string }[] = [];
+
+  for (const file of files) {
+    for (const raw of extractLinkTargets(file.content)) {
+      const resolved = resolveCollectionLink(file.path, raw);
+
+      if (resolved === null) {
+        continue;
+      }
+
+      const target = existing.get(resolved.toLowerCase()) ?? resolved;
+      const key = `${file.path}\u0000${target}`;
+
+      if (target === file.path || seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      links.push({ source: file.path, target });
+
+      if (!existing.has(target.toLowerCase())) {
+        missing.add(target);
+      }
+
+      degree.set(file.path, (degree.get(file.path) ?? 0) + 1);
+      degree.set(target, (degree.get(target) ?? 0) + 1);
+    }
+  }
+
+  const nodes = [...degree.entries()].map(([path, count]) => ({ path, degree: count, missing: missing.has(path) }));
+  return { nodes, links };
+}

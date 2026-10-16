@@ -4,7 +4,7 @@
  */
 import { FSWatcher, promises as fs, realpathSync, watch } from 'fs';
 import * as path from 'path';
-import { CollectionNode, DEFAULT_COLLECTION_EXCLUDES, findInText, isMarkdownFile, scanFolder } from './collections-scan';
+import { CollectionNode, DEFAULT_COLLECTION_EXCLUDES, buildCollectionGraph, findInText, isMarkdownFile, scanFolder } from './collections-scan';
 import { CollectionKind, WorkerRequest, WorkerResponse } from './collections-protocol';
 
 interface Watched {
@@ -21,6 +21,8 @@ interface Watched {
 const RESCAN_DELAY_MS = 250;
 const MAX_MATCHES_PER_FILE = 5;
 const MAX_SEARCH_RESULTS = 300;
+/** Beyond this many files, a graph would be unreadable (and long to build): only the first ones are drawn. */
+const MAX_GRAPH_FILES = 2000;
 
 const port = process.parentPort;
 const watched = new Map<string, Watched>();
@@ -149,6 +151,25 @@ async function search(requestId: number, query: string): Promise<void> {
   }
 }
 
+/** Reads the files of the collection to find their links to each other. */
+async function sendGraph(root: string): Promise<void> {
+  const entry = watched.get(root);
+
+  if (!entry) {
+    return;
+  }
+
+  const files: { path: string; content: string }[] = [];
+
+  for (const file of entry.files.slice(0, MAX_GRAPH_FILES)) {
+    const absolute = entry.kind === 'file' ? entry.root : path.join(entry.root, file);
+    const content = await fs.readFile(absolute, 'utf-8').catch(() => '');
+    files.push({ path: file, content });
+  }
+
+  send({ type: 'graph', root, graph: buildCollectionGraph(files) });
+}
+
 port.on('message', ({ data }: { data: WorkerRequest }) => {
   switch (data.type) {
     case 'watch':
@@ -170,6 +191,9 @@ port.on('message', ({ data }: { data: WorkerRequest }) => {
     }
     case 'search':
       void search(data.requestId, data.query);
+      break;
+    case 'graph':
+      void sendGraph(data.root);
       break;
     case 'cancelSearch':
       if (currentSearch === data.requestId) {

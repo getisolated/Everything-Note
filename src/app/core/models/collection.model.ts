@@ -55,12 +55,19 @@ export interface CollectionSearchHit {
   matches: CollectionMatch[];
 }
 
+/** Links between the files of one collection (never across collections); paths relative to its root. */
+export interface CollectionGraph {
+  nodes: { path: string; degree: number; missing: boolean }[];
+  links: { source: string; target: string }[];
+}
+
 /** Messages of the collections worker, forwarded by the main process. */
 export type CollectionsEvent =
   | { type: 'tree'; root: string; tree: CollectionNode[]; truncated: boolean }
   | { type: 'error'; root: string; message: string }
   | { type: 'changed'; root: string; paths: string[] }
-  | { type: 'searchResults'; requestId: number; root: string; path: string; matches: CollectionMatch[]; done: boolean };
+  | { type: 'searchResults'; requestId: number; root: string; path: string; matches: CollectionMatch[]; done: boolean }
+  | { type: 'graph'; root: string; graph: CollectionGraph };
 
 /** Files modified on disk, as last reported (a new object each time). */
 export interface CollectionChange {
