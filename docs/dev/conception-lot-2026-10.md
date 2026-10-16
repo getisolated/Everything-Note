@@ -146,7 +146,7 @@ Toute suppression de fichier disque (collections, #15) passe par la **corbeille 
 - Stockage core : colonne `color TEXT NULL` sur `notes` et `folders`.
 - Extension aux collections dans #15.
 
-## 15. Collections 🟢
+## 15. Collections ✅
 
 **Besoin** : ouvrir des fichiers `.md` et des dossiers ailleurs sur le disque (ex. doc d'un repo), affichés à part des notes core, persistés.
 
@@ -176,6 +176,10 @@ Toute suppression de fichier disque (collections, #15) passe par la **corbeille 
 - Pas de backlinks, pas de tags.
 - Fichier isolé : via la sidebar (« Ouvrir un fichier… »), glisser-déposer sur la fenêtre, et association `.md` dans l'installeur (`fileAssociations` electron-builder + gestion de `second-instance` / argv). Un fichier ouvert ainsi est ajouté aux collections.
 - Images non listées dans l'arbre, mais rendues dans la preview (#16) via un protocole Electron restreint aux racines de collection.
+
+**Implémentation (écarts et reste à faire)**
+- Identité d'onglet : plutôt qu'une union `DocRef` dans tout le code, chaque fichier ouvert reçoit un id négatif stable pour la session (`FileDocsService`), et l'onglet persiste son `{ root, path }`. Les onglets, l'éditeur et les raccourcis fonctionnent ainsi sans changement de type.
+- Couleurs et multi-sélection des fichiers de collection, images relatives dans la preview : à brancher une fois #12-#14 (PR #43) et #16 (PR #44) mergées.
 
 **Recherche — options**
 

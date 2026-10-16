@@ -12,6 +12,23 @@ const FORMATTING_BAR_MODES: readonly FormattingBarMode[] = ['full', 'compact'];
 const FORMATTING_BAR_STYLES: readonly FormattingBarStyle[] = ['pinned', 'floating'];
 const FORMATTING_BAR_POSITIONS: readonly FormattingBarPosition[] = ['top', 'bottom'];
 
+/** Folders skipped when scanning a collection (mirrors DEFAULT_COLLECTION_EXCLUDES of collections-scan.ts). */
+const DEFAULT_COLLECTIONS_EXCLUDE = [
+  'node_modules', 'bin', 'obj', 'build', 'dist', 'out', 'target', 'coverage', 'vendor',
+  '__pycache__', 'venv', '.venv', '.git', '.angular', '.next', '.nuxt', '.vs', '.vscode', '.idea',
+];
+const MAX_EXCLUDES = 100;
+const MAX_EXCLUDE_LENGTH = 100;
+
+function sanitizeExcludes(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) {
+    return fallback;
+  }
+  const names = value.filter((name): name is string => typeof name === 'string').map(name => name.trim())
+    .filter(name => name.length > 0 && name.length <= MAX_EXCLUDE_LENGTH && !/[\\/]/.test(name));
+  return [...new Set(names)].slice(0, MAX_EXCLUDES);
+}
+
 export interface OverlayPosition {
   x: number;
   y: number;
@@ -41,6 +58,8 @@ export interface AppSettings {
   trailingLine: boolean;
   /** true: the h1/h2/h3 outline is shown on the right of the open note. */
   showOutline: boolean;
+  /** Folder names never listed in the collections (hidden folders are always skipped). */
+  collectionsExclude: string[];
   /** Last position chosen by the user; null until the overlay has been moved once. */
   overlayPosition: OverlayPosition | null;
 }
@@ -71,6 +90,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   wordWrap: true,
   trailingLine: false,
   showOutline: true,
+  collectionsExclude: DEFAULT_COLLECTIONS_EXCLUDE,
   overlayPosition: null,
 };
 
@@ -133,6 +153,7 @@ export function sanitizeSettings(input: unknown, base: AppSettings = DEFAULT_SET
     wordWrap: typeof raw['wordWrap'] === 'boolean' ? raw['wordWrap'] : base.wordWrap,
     trailingLine: typeof raw['trailingLine'] === 'boolean' ? raw['trailingLine'] : base.trailingLine,
     showOutline: typeof raw['showOutline'] === 'boolean' ? raw['showOutline'] : base.showOutline,
+    collectionsExclude: sanitizeExcludes(raw['collectionsExclude'], base.collectionsExclude),
     overlayPosition: 'overlayPosition' in raw ? sanitizePosition(raw['overlayPosition']) : base.overlayPosition,
   };
 }

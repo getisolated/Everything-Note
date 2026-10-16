@@ -34,6 +34,8 @@ export interface AppSettings {
   trailingLine: boolean;
   /** true: the h1/h2/h3 outline is shown on the right of the open note. */
   showOutline: boolean;
+  /** Folder names never listed in the collections (hidden folders are always skipped). */
+  collectionsExclude: string[];
 }
 
 export type SettingsPatch = Partial<AppSettings>;
@@ -62,6 +64,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   wordWrap: true,
   trailingLine: false,
   showOutline: true,
+  collectionsExclude: [
+    'node_modules', 'bin', 'obj', 'build', 'dist', 'out', 'target', 'coverage', 'vendor',
+    '__pycache__', 'venv', '.venv', '.git', '.angular', '.next', '.nuxt', '.vs', '.vscode', '.idea',
+  ],
 };
 
 export const OVERLAY_NOTE_TAG = 'overlay';

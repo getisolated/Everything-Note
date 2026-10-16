@@ -10,6 +10,13 @@ import { sanitizeSettings, SettingsPatch } from './settings-schema';
 import { applyLaunchAtStartup, launchedHidden } from './startup';
 import { createTray, destroyTray } from './tray';
 import { applyUpdate, getUpdateInfo, onAutoUpdateChanged, startUpdater, stopUpdater } from './updater';
+import {
+  CollectionFileRef, addCollection, cancelCollectionSearch, createCollectionFile, initCollections, listCollections,
+  moveCollectionPath, openPaths, pickCollections, readCollectionFile, relocateCollection, removeCollection,
+  renameCollection, renameCollectionPath, rescanCollection, revealCollectionPath, searchCollections,
+  setCollectionExcludes, stopCollections, trashCollectionPath, writeCollectionFile,
+} from './collections';
+import { promises as fs } from 'fs';
 
 const isDev = process.env['NODE_ENV'] === 'development';
 let mainWindow: BrowserWindow | null = null;
@@ -51,6 +58,9 @@ function createWindow(showOnReady = true): void {
     mainWindow.once('ready-to-show', () => mainWindow?.show());
   }
 
+  // Markdown files given at launch (double-click in the Explorer) open once the app is loaded
+  mainWindow.webContents.once('did-finish-load', () => { void openFromArguments(process.argv); });
+
   mainWindow.on('close', (event) => {
     if (!isQuitting) {
       event.preventDefault();
@@ -91,12 +101,32 @@ function onGlobalShortcut(): void {
   }
 }
 
-// A second launch (start menu, login item...) just brings the running instance forward
+/** Markdown files passed on the command line (file association): opened as collections, in editor tabs. */
+async function openFromArguments(argv: string[]): Promise<void> {
+  const candidates = argv.slice(1).filter(arg => /\.md$/i.test(arg));
+  const existing = await Promise.all(candidates.map(arg => fs.stat(arg).then(stats => (stats.isFile() ? arg : null), () => null)));
+  const files = existing.filter((arg): arg is string => arg !== null);
+
+  if (files.length > 0) {
+    sendOpenFiles(await openPaths(files));
+  }
+}
+
+function sendOpenFiles(refs: CollectionFileRef[]): void {
+  if (refs.length > 0) {
+    mainWindow?.webContents.send('collections:open', refs);
+  }
+}
+
+// A second launch (start menu, login item, a .md double-clicked...) just brings the running instance forward
 const isPrimaryInstance = app.requestSingleInstanceLock();
 if (!isPrimaryInstance) {
   app.quit();
 } else {
-  app.on('second-instance', () => showMainWindow());
+  app.on('second-instance', (_event, argv) => {
+    showMainWindow();
+    void openFromArguments(argv);
+  });
 }
 
 app.whenReady().then(() => {
@@ -112,6 +142,8 @@ app.whenReady().then(() => {
     console.error(`[Shortcut] Unable to register ${settings.globalShortcut}`);
   }
   startUpdater();
+  // In the background, once the window exists: the core notes never wait for the disk scans
+  initCollections(() => mainWindow, settings.collectionsExclude);
   app.on('activate', () => {
     if (!mainWindow) createWindow();
   });
@@ -127,6 +159,7 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   stopUpdater();
+  stopCollections();
   unregisterGlobalShortcuts();
   destroyTray();
 });
@@ -207,6 +240,36 @@ safeHandle('folders:delete', (e, id: number, mode: FolderDeleteMode) => {
   return deletedNoteIds;
 });
 
+// ── Collections (folders / markdown files of the disk) ──────────────────────
+safeHandle('collections:list', () => listCollections());
+safeHandle('collections:pick', (e, kind: unknown) =>
+  pickCollections(BrowserWindow.fromWebContents(e.sender), kind === 'file' ? 'file' : 'folder')
+);
+safeHandle('collections:openPaths', async (_e, paths: unknown) => {
+  const valid = Array.isArray(paths) ? paths.filter((p): p is string => typeof p === 'string') : [];
+  return openPaths(valid);
+});
+safeHandle('collections:add', (_e, candidate: unknown) => (typeof candidate === 'string' ? addCollection(candidate) : null));
+safeHandle('collections:remove', (_e, root: unknown) => { removeCollection(root); return true; });
+safeHandle('collections:rename', (_e, root: unknown, name: unknown) => renameCollection(root, name) ?? null);
+safeHandle('collections:relocate', (e, root: unknown) => relocateCollection(BrowserWindow.fromWebContents(e.sender), root));
+safeHandle('collections:rescan', (_e, root: unknown) => { rescanCollection(root); return true; });
+safeHandle('collections:read', (_e, root: unknown, relative: unknown) => readCollectionFile(root, relative));
+safeHandle('collections:write', async (_e, root: unknown, relative: unknown, content: unknown) => {
+  await writeCollectionFile(root, relative, content);
+  return true;
+});
+safeHandle('collections:createFile', (_e, root: unknown, folder: unknown, name: unknown) => createCollectionFile(root, folder, name));
+safeHandle('collections:renamePath', (_e, root: unknown, relative: unknown, name: unknown) => renameCollectionPath(root, relative, name));
+safeHandle('collections:movePath', (_e, root: unknown, relative: unknown, folder: unknown) => moveCollectionPath(root, relative, folder));
+safeHandle('collections:trash', async (_e, root: unknown, relative: unknown) => {
+  await trashCollectionPath(root, relative);
+  return true;
+});
+safeHandle('collections:reveal', (_e, root: unknown, relative: unknown) => { revealCollectionPath(root, relative); return true; });
+safeHandle('collections:search', (_e, query: unknown) => searchCollections(query));
+safeHandle('collections:cancelSearch', (_e, requestId: unknown) => { cancelCollectionSearch(requestId); return true; });
+
 // ── Settings & overlay ───────────────────────────────────────────────────────
 safeHandle('settings:get', () => getSettings());
 safeHandle('settings:set', (e, patch: SettingsPatch) => {
@@ -226,6 +289,9 @@ safeHandle('settings:set', (e, patch: SettingsPatch) => {
   }
   if (next.autoUpdate !== before.autoUpdate) {
     onAutoUpdateChanged();
+  }
+  if (next.collectionsExclude.join('\n') !== before.collectionsExclude.join('\n')) {
+    setCollectionExcludes(next.collectionsExclude);
   }
   broadcastToWindows('settings:changed', getSettings(), e.sender);
   return { ok: true, settings: getSettings() };

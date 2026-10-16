@@ -38,6 +38,10 @@ import { ThemeService } from '../../core/services/theme.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { acceleratorToCodeMirrorKey } from '../../core/utils/accelerator.util';
 import { Note, OVERLAY_NOTES_TAB_ID } from '../../core/models/note.model';
+import { CollectionFileRef } from '../../core/models/collection.model';
+import { CollectionsService } from '../../core/services/collections.service';
+import { FileDocsService } from '../../core/services/file-docs.service';
+import { baseName, resolveRelativeLink } from '../../core/utils/collection.util';
 
 @Component({
   selector: 'app-editor',
@@ -45,6 +49,18 @@ import { Note, OVERLAY_NOTES_TAB_ID } from '../../core/models/note.model';
   imports: [ContextMenuComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (fileBanner(); as banner) {
+      <div class="file-banner" role="alert" [class.error]="banner.kind === 'missing'">
+        @if (banner.kind === 'conflict') {
+          <span>This file was changed on the disk while you were editing it.</span>
+          <button type="button" (click)="reloadFromDisk()">Reload from disk</button>
+          <button type="button" (click)="fileBanner.set(null)">Keep my version</button>
+        } @else {
+          <span>{{ banner.message }}</span>
+          <button type="button" (click)="fileBanner.set(null)">Dismiss</button>
+        }
+      </div>
+    }
     <div class="editor-wrapper">
       @if (activeNote()) {
         <div class="editor-host" #editorHost></div>
@@ -108,10 +124,16 @@ export class EditorComponent implements OnDestroy, OnChanges {
   protected settingsService = inject(SettingsService);
   private themeService = inject(ThemeService);
   private formattingBar = inject(FormattingBarService);
+  private fileDocs = inject(FileDocsService);
+  private collections = inject(CollectionsService);
 
   readonly activeNote = signal<Note | null>(null);
   readonly headings = signal<OutlineHeading[]>([]);
   readonly activeHeading = signal(-1);
+  /** Problem with the collection file being edited: changed on disk meanwhile, or unreadable. */
+  protected readonly fileBanner = signal<{ kind: 'conflict' | 'missing'; message: string } | null>(null);
+  /** Last text written to (or read from) the disk for the open file: its own change events are not reloads. */
+  private fileContentOnDisk: string | null = null;
   readonly ctxMenu = signal<{ items: ContextMenuEntry[]; x: number; y: number } | null>(null);
 
   private editorView: EditorView | null = null;
@@ -157,6 +179,12 @@ export class EditorComponent implements OnDestroy, OnChanges {
       });
     });
 
+    // A collection file open here was changed by another program
+    effect(() => {
+      const change = this.collections.lastChange();
+      untracked(() => { void this.onDiskChange(change); });
+    });
+
     effect(() => {
       this.settingsService.appShortcuts();
       untracked(() => {
@@ -198,7 +226,17 @@ export class EditorComponent implements OnDestroy, OnChanges {
     }
 
     try {
-      const note = id === OVERLAY_NOTES_TAB_ID ? this.buildOverlayNotesDocument() : await this.notes.getById(id);
+      const file = this.fileDocs.refFor(id);
+      this.fileBanner.set(null);
+      let note: Note | null;
+
+      if (id === OVERLAY_NOTES_TAB_ID) {
+        note = this.buildOverlayNotesDocument();
+      } else if (file) {
+        note = await this.buildFileDocument(id, file);
+      } else {
+        note = await this.notes.getById(id);
+      }
       // Abort if a newer load was started while fetching
       if (generation !== this.loadGeneration) return;
       this.activeNote.set(note);
@@ -247,9 +285,11 @@ export class EditorComponent implements OnDestroy, OnChanges {
         const note = this.activeNote();
         if (!note) return;
 
-        // Extract title from first line
-        const title = this.notes.extractTitle(content);
-        this.tabs.updateTitle(note.id, title || 'Untitled');
+        // A note is titled by its first line; a file keeps its file name
+        if (!this.fileDocs.isFileDoc(note.id)) {
+          const title = this.notes.extractTitle(content);
+          this.tabs.updateTitle(note.id, title || 'Untitled');
+        }
         this.tabs.markDirty(note.id, true);
 
         // Debounce auto-save (1s)
@@ -520,6 +560,15 @@ export class EditorComponent implements OnDestroy, OnChanges {
 
   /** Ctrl+click on a link: a note (by `note://id` or by path) opens in a tab, a web address in the browser. */
   private followLink(target: string): void {
+    // In a collection file, relative links lead to the other files of the collection
+    const file = this.fileDocs.refFor(this.activeNote()?.id ?? null);
+    const relative = file && !/^[a-z][a-z0-9+.-]*:/i.test(target.trim()) ? resolveRelativeLink(file.path, target) : null;
+
+    if (file && relative !== null) {
+      this.collections.open({ root: file.root, path: relative });
+      return;
+    }
+
     const noteUrl = /^note:\/\/(?<id>\d+)$/.exec(target.trim());
     const notes = this.notes.notes();
     let noteId: number | null = noteUrl?.groups?.['id'] ? Number(noteUrl.groups['id']) : null;
@@ -598,6 +647,13 @@ export class EditorComponent implements OnDestroy, OnChanges {
 
   private async saveNote(id: number, content: string): Promise<void> {
     if (id === OVERLAY_NOTES_TAB_ID) return;
+    const file = this.fileDocs.refFor(id);
+
+    if (file) {
+      await this.saveFile(id, file, content);
+      return;
+    }
+
     try {
       const title = this.notes.extractTitle(content);
       const previousTitle = this.notes.notes().find(n => n.id === id)?.title;
@@ -613,6 +669,87 @@ export class EditorComponent implements OnDestroy, OnChanges {
     } catch (err) {
       console.error('[Editor] Failed to save note:', err);
     }
+  }
+
+  /** A collection file shown as a note; unreadable (moved, deleted), it opens empty with a banner. */
+  private async buildFileDocument(id: number, file: CollectionFileRef): Promise<Note> {
+    let content = '';
+
+    try {
+      content = await this.collections.read(file);
+      this.fileContentOnDisk = content;
+    } catch {
+      this.fileContentOnDisk = null;
+      this.fileBanner.set({ kind: 'missing', message: `${file.path} could not be read: it was probably moved or deleted.` });
+    }
+
+    return { id, title: baseName(file.path), content, tags: [], folderId: null, sortOrder: null, createdAt: '', updatedAt: '' };
+  }
+
+  private async saveFile(id: number, file: CollectionFileRef, content: string): Promise<void> {
+    try {
+      this.fileContentOnDisk = content;
+      await this.collections.write(file, content);
+      this.tabs.markDirty(id, false);
+      this.activeNote.update(n => (n ? { ...n, content } : n));
+    } catch (err) {
+      this.fileContentOnDisk = null;
+      this.fileBanner.set({ kind: 'missing', message: `${file.path} could not be saved: ${err instanceof Error ? err.message : String(err)}` });
+    }
+  }
+
+  /** The open file changed on disk: reloaded when it holds no unsaved edit, otherwise the user chooses. */
+  private async onDiskChange(change: { root: string; paths: string[] } | null): Promise<void> {
+    const note = this.activeNote();
+    const file = this.fileDocs.refFor(note?.id ?? null);
+
+    if (!change || !note || !file || change.root !== file.root || !change.paths.includes(file.path)) {
+      return;
+    }
+
+    const content = await this.collections.read(file).catch(() => null);
+
+    // Our own save, or nothing new
+    if (content === null || content === this.fileContentOnDisk || content === this.editorView?.state.doc.toString()) {
+      return;
+    }
+
+    const dirty = this.tabs.tabs().find(tab => tab.noteId === note.id)?.isDirty ?? false;
+
+    if (dirty) {
+      this.fileBanner.set({ kind: 'conflict', message: '' });
+    } else {
+      this.replaceContent(content);
+    }
+  }
+
+  protected async reloadFromDisk(): Promise<void> {
+    const file = this.fileDocs.refFor(this.activeNote()?.id ?? null);
+    this.fileBanner.set(null);
+
+    if (file) {
+      if (this.saveDebounce) {
+        clearTimeout(this.saveDebounce);
+        this.saveDebounce = null;
+      }
+      this.replaceContent(await this.collections.read(file));
+      this.tabs.markDirty(this.activeNote()?.id ?? 0, false);
+    }
+  }
+
+  /** Puts the disk content in the editor without it counting as an edit to save. */
+  private replaceContent(content: string): void {
+    const view = this.editorView;
+
+    if (!view) {
+      return;
+    }
+
+    this.fileContentOnDisk = content;
+    this.isUpdatingFromModel = true;
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: content } });
+    this.isUpdatingFromModel = false;
+    this.activeNote.update(n => (n ? { ...n, content } : n));
   }
 
   openSearch(): void {

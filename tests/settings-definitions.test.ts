@@ -22,8 +22,8 @@ describe('filterSettings', () => {
 describe('groupByCategory', () => {
   it('groups by category in declaration order', () => {
     const sections = groupByCategory(SETTING_DEFINITIONS);
-    expect(sections.map(s => s.category)).toEqual(['General', 'Appearance', 'Editor', 'Formatting Bar', 'Global Shortcut', 'Quick Note Overlay', 'Keyboard Shortcuts']);
-    expect(sections[5]?.settings.map(d => d.key)).toEqual(['overlayWidth', 'overlayHeight', 'enterToSend']);
+    expect(sections.map(s => s.category)).toEqual(['General', 'Appearance', 'Editor', 'Formatting Bar', 'Collections', 'Global Shortcut', 'Quick Note Overlay', 'Keyboard Shortcuts']);
+    expect(sections[6]?.settings.map(d => d.key)).toEqual(['overlayWidth', 'overlayHeight', 'enterToSend']);
   });
 
   it('returns no section for no setting', () => {

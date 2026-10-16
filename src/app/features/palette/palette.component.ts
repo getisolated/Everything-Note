@@ -9,7 +9,8 @@ import { NotesService } from '../../core/services/notes.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { LayoutService } from '../../core/services/layout.service';
-import { OVERLAY_NOTES_TAB_ID, PaletteResult } from '../../core/models/note.model';
+import { CollectionsService } from '../../core/services/collections.service';
+import { PaletteResult } from '../../core/models/note.model';
 
 @Component({
   selector: 'app-palette',
@@ -85,6 +86,20 @@ import { OVERLAY_NOTES_TAB_ID, PaletteResult } from '../../core/models/note.mode
                     }
                   }
 
+                  @if (result.type === 'file') {
+                    <div class="item-icon file-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M2 10h20"/>
+                      </svg>
+                    </div>
+                    <div class="item-content">
+                      <span class="item-label">{{ result.file!.label }}</span>
+                      @if (result.file!.preview) {
+                        <span class="item-desc">{{ result.file!.preview }}</span>
+                      }
+                    </div>
+                  }
+
                   @if (result.type === 'tag') {
                     <div class="item-icon">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,6 +129,9 @@ export class PaletteComponent implements OnDestroy {
   private tabs = inject(TabsService);
   private settings = inject(SettingsService);
   private layout = inject(LayoutService);
+  private collections = inject(CollectionsService);
+  /** Stops the content search of the collections still running for the previous query. */
+  private cancelFileSearch: (() => void) | null = null;
 
   @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement>;
 
@@ -235,6 +253,7 @@ export class PaletteComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.cancelFileSearch?.();
   }
 
   close(): void { this.palette.close(); }
@@ -248,6 +267,8 @@ export class PaletteComponent implements OnDestroy {
 
   private async search(query: string): Promise<void> {
     const mode = this.mode();
+    this.cancelFileSearch?.();
+    this.cancelFileSearch = null;
 
     if (mode === 'command' && !query.trim()) {
       this._results.set(this.commands);
@@ -283,10 +304,45 @@ export class PaletteComponent implements OnDestroy {
       const cmdResults = this.commands.filter(r =>
         r.command!.label.toLowerCase().includes(query.toLowerCase())
       );
-      this._results.set([...cmdResults, ...noteResults]);
+      this._results.set([...cmdResults, ...noteResults, ...this.fileNameResults(query)]);
     } else {
-      this._results.set(noteResults);
+      this._results.set([...noteResults, ...this.fileNameResults(query)]);
+      void this.searchFileContents(query);
     }
+  }
+
+  /** Collection files whose name matches: instant, from the trees already loaded. */
+  private fileNameResults(query: string): PaletteResult[] {
+    const needle = query.trim().toLowerCase();
+
+    if (!needle) {
+      return [];
+    }
+
+    return this.collections.files()
+      .filter(file => file.ref.path.toLowerCase().includes(needle))
+      .slice(0, 8)
+      .map(file => ({ type: 'file', file: { ref: file.ref, label: file.label } }));
+  }
+
+  /** Then the lines of their content (read by the collections worker), appended as they arrive. */
+  private async searchFileContents(query: string): Promise<void> {
+    if (!query.trim()) {
+      return;
+    }
+
+    const cancel = await this.collections.searchFiles(query, hit => {
+      const shown = new Set(this._results().filter(r => r.type === 'file').map(r => `${r.file!.ref.root}\u0000${r.file!.ref.path}\u0000${r.file!.preview ?? ''}`));
+      const additions: PaletteResult[] = hit.matches
+        .map(match => ({ type: 'file' as const, file: { ref: hit.ref, label: `${hit.label}:${match.line}`, preview: match.text.trim() } }))
+        .filter(result => !shown.has(`${result.file.ref.root}\u0000${result.file.ref.path}\u0000${result.file.preview}`));
+
+      if (additions.length > 0 && this.query === query) {
+        this._results.update(results => [...results, ...additions]);
+      }
+    }, () => undefined);
+
+    this.cancelFileSearch = cancel;
   }
 
   async execute(result: PaletteResult): Promise<void> {
@@ -299,6 +355,8 @@ export class PaletteComponent implements OnDestroy {
       this.tabs.openNote(result.note!.id, result.note!.title);
     } else if (result.type === 'tag') {
       this.palette.open('search', '#' + result.tag);
+    } else if (result.type === 'file') {
+      this.collections.open(result.file!.ref);
     }
   }
 
@@ -335,7 +393,8 @@ export class PaletteComponent implements OnDestroy {
   private async copyNoteLink(): Promise<void> {
     const noteId = this.tabs.activeNoteId();
 
-    if (noteId !== null && noteId !== OVERLAY_NOTES_TAB_ID) {
+    // Only real notes (positive ids) have a note:// link: not the quick notes, nor the collection files
+    if (noteId !== null && noteId > 0) {
       await navigator.clipboard.writeText(`note://${noteId}`);
     }
   }

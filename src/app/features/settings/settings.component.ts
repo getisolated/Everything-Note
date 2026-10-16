@@ -76,6 +76,16 @@ import { SETTING_DEFINITIONS, SettingDefinition, filterSettings, groupByCategory
                             (change)="onNumberChange(def, $event)"
                           />
                         }
+                        @case ('list') {
+                          <div class="description">{{ def.description }}</div>
+                          <input
+                            class="control list"
+                            type="text"
+                            spellcheck="false"
+                            [value]="listValueOf(def)"
+                            (change)="onListChange(def, $event)"
+                          />
+                        }
                         @case ('select') {
                           <div class="description">{{ def.description }}</div>
                           <app-select [value]="stringValueOf(def)" [options]="def.options ?? []" (valueChange)="onSelectChange(def, $event)" />
@@ -156,6 +166,12 @@ export class SettingsComponent {
     return String(this.valueOf(def));
   }
 
+  /** A list setting is edited as comma-separated text. */
+  listValueOf(def: SettingDefinition): string {
+    const value = this.valueOf(def);
+    return Array.isArray(value) ? value.join(', ') : '';
+  }
+
   shortcutLabel(def: SettingDefinition): string {
     const accelerator = def.shortcutId ? this.settingsService.appShortcuts()[def.shortcutId] : this.settings().globalShortcut;
     return formatAccelerator(accelerator ?? '');
@@ -165,7 +181,13 @@ export class SettingsComponent {
     if (def.shortcutId) {
       return def.shortcutId in this.settings().appShortcuts;
     }
-    return this.valueOf(def) !== (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[def.key];
+    const value = this.valueOf(def);
+    const defaultValue = (DEFAULT_SETTINGS as unknown as Record<string, unknown>)[def.key];
+    // Lists are compared by content: a saved copy is never the same array as the default one
+    if (Array.isArray(value) && Array.isArray(defaultValue)) {
+      return value.join('\n') !== defaultValue.join('\n');
+    }
+    return value !== defaultValue;
   }
 
   async reset(def: SettingDefinition): Promise<void> {
@@ -203,6 +225,13 @@ export class SettingsComponent {
     if (input.value !== '' && Number.isFinite(value)) await this.save(def, value);
     // Re-sync with the value actually applied (the main process clamps to its bounds)
     input.value = String(this.valueOf(def));
+  }
+
+  async onListChange(def: SettingDefinition, event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    await this.save(def, input.value.split(',').map(item => item.trim()).filter(Boolean));
+    // Re-sync with the list actually applied (the main process drops invalid names and duplicates)
+    input.value = this.listValueOf(def);
   }
 
   async onSelectChange(def: SettingDefinition, value: string): Promise<void> {

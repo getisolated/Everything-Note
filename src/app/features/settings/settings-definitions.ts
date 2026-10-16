@@ -1,6 +1,6 @@
 import { APP_SHORTCUTS } from '../../core/models/app-shortcuts.model';
 
-export type SettingControl = 'checkbox' | 'number' | 'select' | 'shortcut';
+export type SettingControl = 'checkbox' | 'number' | 'select' | 'shortcut' | 'list';
 
 export interface SettingDefinition {
   /** AppSettings key, or `shortcut:<id>` for a rebindable in-app shortcut. */
@@ -126,6 +126,13 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
       { value: 'top', label: 'Top' },
       { value: 'bottom', label: 'Bottom' },
     ],
+  },
+  {
+    key: 'collectionsExclude',
+    category: 'Collections',
+    title: 'Excluded Folders',
+    description: 'Folder names never listed in the collections (build output, dependencies…), separated by commas. Hidden folders are always skipped.',
+    control: 'list',
   },
   {
     key: 'globalShortcut',

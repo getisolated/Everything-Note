@@ -30,6 +30,7 @@ import {
 import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-menu/context-menu.component';
 import { ConfirmDialogAction, ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { FocusSelectDirective } from '../../shared/ui/focus-select.directive';
+import { CollectionsSectionComponent } from './collections-section.component';
 
 const NEW_FOLDER_NAME = 'New folder';
 
@@ -41,7 +42,7 @@ const ICON_DELETE = 'M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [ContextMenuComponent, ConfirmDialogComponent, FocusSelectDirective],
+  imports: [ContextMenuComponent, ConfirmDialogComponent, FocusSelectDirective, CollectionsSectionComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[style.width.px]': 'width()',

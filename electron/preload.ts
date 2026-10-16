@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron/renderer';
+import { contextBridge, ipcRenderer, webUtils } from 'electron/renderer';
 
 function subscribe(channel: string, callback: (payload?: any) => void): () => void {
   const listener = (_event: unknown, payload?: unknown): void => callback(payload);
@@ -36,6 +36,28 @@ const api = {
   placeFolder: (id: number, parentId: number | null, orderedIds: number[]) =>
     ipcRenderer.invoke('folders:place', id, parentId, orderedIds),
   deleteFolder: (id: number, mode: 'moveToRoot' | 'deleteAll') => ipcRenderer.invoke('folders:delete', id, mode),
+
+  // Collections (folders / markdown files of the disk)
+  listCollections: () => ipcRenderer.invoke('collections:list'),
+  pickCollections: (kind: 'folder' | 'file') => ipcRenderer.invoke('collections:pick', kind),
+  openCollectionPaths: (paths: string[]) => ipcRenderer.invoke('collections:openPaths', paths),
+  removeCollection: (root: string) => ipcRenderer.invoke('collections:remove', root),
+  renameCollection: (root: string, name: string) => ipcRenderer.invoke('collections:rename', root, name),
+  relocateCollection: (root: string) => ipcRenderer.invoke('collections:relocate', root),
+  rescanCollection: (root: string) => ipcRenderer.invoke('collections:rescan', root),
+  readCollectionFile: (root: string, path: string) => ipcRenderer.invoke('collections:read', root, path),
+  writeCollectionFile: (root: string, path: string, content: string) => ipcRenderer.invoke('collections:write', root, path, content),
+  createCollectionFile: (root: string, folder: string, name: string) => ipcRenderer.invoke('collections:createFile', root, folder, name),
+  renameCollectionPath: (root: string, path: string, name: string) => ipcRenderer.invoke('collections:renamePath', root, path, name),
+  moveCollectionPath: (root: string, path: string, folder: string) => ipcRenderer.invoke('collections:movePath', root, path, folder),
+  trashCollectionPath: (root: string, path: string) => ipcRenderer.invoke('collections:trash', root, path),
+  revealCollectionPath: (root: string, path: string) => ipcRenderer.invoke('collections:reveal', root, path),
+  searchCollections: (query: string) => ipcRenderer.invoke('collections:search', query),
+  cancelCollectionSearch: (requestId: number) => ipcRenderer.invoke('collections:cancelSearch', requestId),
+  /** Disk path of a file dropped on the window (File.path no longer exists in Electron). */
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  onCollectionsEvent: (callback: (event: unknown) => void) => subscribe('collections:event', callback),
+  onCollectionsOpen: (callback: (refs: unknown) => void) => subscribe('collections:open', callback),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),

@@ -21,6 +21,9 @@ import { FoldersService } from './core/services/folders.service';
 import { SidebarStateService } from './core/services/sidebar-state.service';
 import { UpdateService } from './core/services/update.service';
 import { FormattingBarService } from './core/services/formatting-bar.service';
+import { FileDocsService } from './core/services/file-docs.service';
+import { CollectionsService } from './core/services/collections.service';
+import { CollectionsBridgeService } from './core/services/collections-bridge.service';
 import { ThemeService } from './core/services/theme.service';
 import { ConfirmDialogAction, ConfirmDialogComponent } from './shared/ui/confirm-dialog.component';
 import { OVERLAY_NOTES_TAB_ID } from './core/models/note.model';
@@ -33,6 +36,10 @@ import { findSampleNotesToGather } from './core/utils/sample-notes.util';
   standalone: true,
   imports: [TabsBarComponent, EditorComponent, PaletteComponent, HomeComponent, SettingsComponent, SidebarComponent, FormattingBarComponent, BacklinksPanelComponent, ConfirmDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:dragover)': 'onFilesDragOver($event)',
+    '(document:drop)': 'onFilesDrop($event)',
+  },
   template: `
     <div class="app-shell">
       <app-tabs-bar />
@@ -125,6 +132,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private updateService = inject(UpdateService);
   private themeService = inject(ThemeService);
   private formattingBar = inject(FormattingBarService);
+  private fileDocs = inject(FileDocsService);
+  private collections = inject(CollectionsService);
+  private collectionsBridge = inject(CollectionsBridgeService);
 
   readonly activeNoteId = this.tabsService.activeNoteId;
   readonly wideMode = this.layoutService.wideMode;
@@ -135,7 +145,8 @@ export class AppComponent implements OnInit, OnDestroy {
   /** The read-only overlay notes document has no identity of its own to be linked to. */
   readonly backlinksShown = computed(() => {
     const id = this.activeNoteId();
-    return id !== null && id !== OVERLAY_NOTES_TAB_ID;
+    // Nor do the collection files: they are not part of the notes' links
+    return id !== null && id !== OVERLAY_NOTES_TAB_ID && !this.fileDocs.isFileDoc(id);
   });
 
   /** Popup offering the update found by the main process; null when closed. */
@@ -169,12 +180,35 @@ export class AppComponent implements OnInit, OnDestroy {
 
       const noteIds = new Set(this.notesService.notes().map(n => n.id));
       this.tabsService.restoreSession(noteIds);
+      // In the background: the folders of the disk never delay the notes
+      this.collections.start();
     } catch (err) {
       console.error('[App] Failed to load notes:', err);
     }
     // Notes sent from the quick-note overlay show up without restarting the app
     this.unsubscribeNotesChanged = this.bridge.onNotesChanged(() => { void this.reloadNotesAndFolders(); });
     this.registerShortcuts();
+  }
+
+  /** Files dragged from the Explorer (not the sidebar's own drags): the window accepts them. */
+  protected onFilesDragOver(event: DragEvent): void {
+    if (event.dataTransfer?.types.includes('Files')) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  /** Dropped folders and markdown files become collections; the files open in tabs. */
+  protected onFilesDrop(event: DragEvent): void {
+    const files = Array.from(event.dataTransfer?.files ?? []);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const paths = files.map(file => this.collectionsBridge.pathForFile(file)).filter((path): path is string => !!path);
+    void this.collections.addPaths(paths);
   }
 
   onUpdateChoice(choice: string | null): void {

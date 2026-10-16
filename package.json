@@ -72,6 +72,14 @@
       "dist-electron/**/*",
       "assets/logo.ico"
     ],
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown",
+        "description": "Markdown document",
+        "role": "Editor"
+      }
+    ],
     "win": {
       "target": "nsis",
       "icon": "assets/logo.ico",
