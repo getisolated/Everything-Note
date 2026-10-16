@@ -1,0 +1,224 @@
+// GitHub-like rendering (after github-markdown-css), colored by the theme tokens
+:host {
+  display: block;
+  overflow-y: auto;
+  min-height: 0;
+  min-width: 0;
+  background: var(--evn-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--evn-scrollbar) transparent;
+}
+
+.markdown-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 40px 80px;
+  font-family: -apple-system, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--evn-text);
+  word-wrap: break-word;
+
+  ::ng-deep {
+    > *:first-child { margin-top: 0 !important; }
+
+    p, blockquote, ul, ol, dl, table, pre, details, .markdown-alert, .mermaid-diagram {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin: 24px 0 16px;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--evn-text-strong);
+    }
+
+    h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid var(--evn-border-soft); }
+    h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid var(--evn-border-soft); }
+    h3 { font-size: 1.25em; }
+    h4 { font-size: 1em; }
+    h5 { font-size: 0.875em; }
+    h6 { font-size: 0.85em; color: var(--evn-text-soft); }
+
+    a {
+      color: var(--evn-accent-text);
+      text-decoration: none;
+      cursor: pointer;
+
+      &:hover { text-decoration: underline; }
+      &.link-broken { color: var(--evn-danger); text-decoration: underline wavy; text-underline-offset: 3px; }
+    }
+
+    strong { font-weight: 600; color: var(--evn-text-strong); }
+
+    hr {
+      height: 4px;
+      margin: 24px 0;
+      padding: 0;
+      background: var(--evn-border-soft);
+      border: 0;
+    }
+
+    blockquote {
+      margin-left: 0;
+      padding: 0 1em;
+      color: var(--evn-text-soft);
+      border-left: 0.25em solid var(--evn-border);
+
+      > :last-child { margin-bottom: 0; }
+    }
+
+    ul, ol { padding-left: 2em; }
+    li + li { margin-top: 0.25em; }
+
+    .task-list-item {
+      list-style-type: none;
+
+      .task-list-item-checkbox {
+        margin: 0 0.35em 0.2em -1.4em;
+        vertical-align: middle;
+      }
+    }
+
+    code, tt {
+      padding: 0.2em 0.4em;
+      font-family: Consolas, 'Cascadia Mono', 'SF Mono', monospace;
+      font-size: 85%;
+      background: rgba(var(--evn-hover-rgb), 0.08);
+      border-radius: 6px;
+      color: var(--evn-syntax-code);
+    }
+
+    pre {
+      padding: 16px;
+      overflow: auto;
+      font-size: 85%;
+      line-height: 1.45;
+      background: var(--evn-bg-panel);
+      border: 1px solid var(--evn-border-subtle);
+      border-radius: 6px;
+
+      code {
+        padding: 0;
+        font-size: 100%;
+        background: transparent;
+        color: var(--evn-syntax-plain);
+        white-space: pre;
+      }
+    }
+
+    table {
+      display: block;
+      width: max-content;
+      max-width: 100%;
+      overflow: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+
+      th, td {
+        padding: 6px 13px;
+        border: 1px solid var(--evn-border);
+      }
+
+      th { font-weight: 600; }
+      tr:nth-child(2n) { background: rgba(var(--evn-hover-rgb), 0.03); }
+    }
+
+    img {
+      max-width: 100%;
+      box-sizing: content-box;
+    }
+
+    kbd {
+      padding: 3px 5px;
+      font-size: 11px;
+      line-height: 10px;
+      border: 1px solid var(--evn-border);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      background: var(--evn-bg-panel);
+    }
+
+    mark { background: rgba(255, 213, 0, 0.35); color: inherit; }
+
+    // ── GitHub alerts ──
+    .markdown-alert {
+      padding: 8px 16px;
+      color: inherit;
+      border-left: 0.25em solid var(--alert-color);
+
+      > :last-child { margin-bottom: 0; }
+    }
+
+    .markdown-alert-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: var(--alert-color);
+    }
+
+    .markdown-alert-note { --alert-color: #4493f8; }
+    .markdown-alert-tip { --alert-color: #3fb950; }
+    .markdown-alert-important { --alert-color: #ab7df8; }
+    .markdown-alert-warning { --alert-color: #d29922; }
+    .markdown-alert-caution { --alert-color: #f85149; }
+
+    // ── Footnotes ──
+    .footnotes {
+      font-size: 12px;
+      color: var(--evn-text-soft);
+      border-top: 1px solid var(--evn-border-soft);
+      padding-top: 12px;
+    }
+
+    .footnotes-sep { display: none; }
+
+    // ── Mermaid ──
+    .mermaid-source {
+      color: var(--evn-text-dimmed);
+    }
+
+    .mermaid-diagram {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+
+      svg { max-width: 100%; height: auto; }
+    }
+
+    .mermaid-error {
+      display: block;
+      padding: 8px 12px;
+      font-family: Consolas, 'Cascadia Mono', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      color: var(--evn-danger);
+      border: 1px solid var(--evn-danger);
+      border-radius: 6px;
+    }
+
+    // ── Code colors (Lezer classHighlighter), same tokens as the editor ──
+    .tok-keyword, .tok-modifier, .tok-operatorKeyword { color: var(--evn-syntax-keyword); }
+    .tok-controlKeyword { color: var(--evn-syntax-control); }
+    .tok-variableName, .tok-propertyName { color: var(--evn-syntax-variable); }
+    .tok-definition { color: var(--evn-syntax-function); }
+    .tok-typeName, .tok-className, .tok-namespace { color: var(--evn-syntax-type); }
+    .tok-string, .tok-string2, .tok-character { color: var(--evn-syntax-string); }
+    .tok-escape, .tok-special { color: var(--evn-syntax-escape); }
+    .tok-number, .tok-bool, .tok-atom, .tok-literal { color: var(--evn-syntax-number); }
+    .tok-constant { color: var(--evn-syntax-constant); }
+    .tok-regexp { color: var(--evn-syntax-regexp); }
+    .tok-comment, .tok-meta { color: var(--evn-syntax-comment); font-style: italic; }
+    .tok-punctuation, .tok-operator { color: var(--evn-syntax-punctuation); }
+    .tok-invalid { color: var(--evn-syntax-invalid); }
+    .tok-link, .tok-url { color: var(--evn-syntax-link); }
+    .tok-heading { color: var(--evn-syntax-heading); font-weight: 600; }
+    .tok-emphasis { font-style: italic; }
+    .tok-strong { font-weight: 600; }
+    .tok-strikethrough { text-decoration: line-through; }
+    .tok-inserted { color: var(--evn-syntax-string); }
+    .tok-deleted { color: var(--evn-syntax-invalid); }
+  }
+}

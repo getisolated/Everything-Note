@@ -29,6 +29,31 @@ const EXTERNAL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const UNSAFE_IN_SEGMENT = /[\\/<>]/g;
 const NEEDS_ANGLE_BRACKETS = /[\s()]/;
 
+/** What a link target points to; a local target (note path, `note://id`) that points to nothing is `broken`. */
+export type LinkStatus = 'note' | 'external' | 'anchor' | 'broken';
+
+const NOTE_URL = /^note:\/\/(?<id>\d+)$/;
+
+/** Status of a link target, `noteExists` telling whether a `note://id` note is still there. */
+export function linkStatus(rawTarget: string, resolve: LinkResolver, noteExists: (id: number) => boolean): LinkStatus {
+  const target = rawTarget.trim();
+  const noteUrl = NOTE_URL.exec(target);
+
+  if (noteUrl?.groups) {
+    return noteExists(Number(noteUrl.groups['id'])) ? 'note' : 'broken';
+  }
+
+  if (EXTERNAL_SCHEME.test(target)) {
+    return 'external';
+  }
+
+  if (target.startsWith('#')) {
+    return 'anchor';
+  }
+
+  return resolve(target) === null ? 'broken' : 'note';
+}
+
 /** Segment of a path: slashes and angle brackets would break the path or the link, so they become dashes. */
 export function toPathSegment(name: string): string {
   return name.replace(UNSAFE_IN_SEGMENT, '-').trim() || 'Untitled';

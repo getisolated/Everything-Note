@@ -1,6 +1,6 @@
 import {
   Component, OnDestroy, OnChanges, Input, SimpleChanges,
-  ElementRef, ViewChild, inject, ChangeDetectionStrategy, signal, effect, untracked
+  ElementRef, ViewChild, inject, ChangeDetectionStrategy, signal, computed, effect, untracked
 } from '@angular/core';
 
 
@@ -17,7 +17,7 @@ import { languages } from '@codemirror/language-data';
 import { bracketMatching, syntaxTree } from '@codemirror/language';
 
 import { editorHighlight } from '../../shared/codemirror/editor-highlight';
-import { markdownDecorationPlugin, markdownDecorationTheme } from '../../shared/codemirror/markdown-decorations';
+import { linkStatusFacet, markdownDecorationPlugin, markdownDecorationTheme } from '../../shared/codemirror/markdown-decorations';
 import { noteTimestamps, noteTimestampsTheme, setTimestampBlocks } from '../../shared/codemirror/note-timestamps';
 import { draftBlocks, toggleDraft } from '../../shared/codemirror/draft-blocks';
 import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-menu/context-menu.component';
@@ -25,7 +25,9 @@ import { OutlineHeading, extractHeadings, findActiveHeading } from '../../shared
 import { linkNavigation } from '../../shared/codemirror/link-navigation';
 import { noteLinkCompletion } from '../../shared/codemirror/note-link-completion';
 import { ElectronBridgeService } from '../../core/services/electron-bridge.service';
-import { createLinkResolver } from '../../core/utils/note-paths.util';
+import { LinkStatus, createLinkResolver, linkStatus } from '../../core/utils/note-paths.util';
+import { EditorViewMode, PreviewScrollRequest } from '../../core/models/editor.model';
+import { MarkdownPreviewComponent } from '../preview/markdown-preview.component';
 import { FoldersService } from '../../core/services/folders.service';
 import { OVERLAY_NOTE_TAG } from '../../core/models/settings.model';
 import { slashCommandExtensions } from '../../shared/codemirror/slash-commands';
@@ -39,15 +41,46 @@ import { TabsService } from '../../core/services/tabs.service';
 import { acceleratorToCodeMirrorKey } from '../../core/utils/accelerator.util';
 import { Note, OVERLAY_NOTES_TAB_ID } from '../../core/models/note.model';
 
+/** Delay before the preview follows the text being typed. */
+const PREVIEW_REFRESH_MS = 150;
+
 @Component({
   selector: 'app-editor',
   standalone: true,
-  imports: [ContextMenuComponent],
+  imports: [ContextMenuComponent, MarkdownPreviewComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="editor-wrapper">
+    <div class="editor-wrapper" [attr.data-view-mode]="viewMode()">
       @if (activeNote()) {
+        <div class="view-modes" role="group" aria-label="View mode">
+          @for (mode of viewModes; track mode.id) {
+            <button
+              type="button"
+              class="view-mode"
+              [class.active]="viewMode() === mode.id"
+              [attr.aria-pressed]="viewMode() === mode.id"
+              [title]="mode.label + (mode.shortcut ? ' (' + shortcutLabel(mode.shortcut) + ')' : '')"
+              (mousedown)="$event.preventDefault()"
+              (click)="setViewMode(mode.id)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="mode.icon"></svg>
+            </button>
+          }
+        </div>
         <div class="editor-host" #editorHost></div>
+        @if (viewMode() !== 'source') {
+          <!-- Loaded on first use: markdown-it and DOMPurify stay out of the startup bundle -->
+          @defer (on immediate) {
+            <app-markdown-preview
+              class="preview"
+              [content]="previewContent()"
+              [linkStatus]="linkStatusOf()"
+              [scrollRequest]="previewScroll()"
+              (linkClicked)="followLink($event)"
+              (scrolledToLine)="syncEditorToLine($event)"
+            />
+          }
+        }
         @if (settingsService.settings().showOutline && headings().length) {
           <nav class="toc" aria-label="Table of contents">
             @for (heading of headings(); track heading.from; let i = $index) {
@@ -112,6 +145,30 @@ export class EditorComponent implements OnDestroy, OnChanges {
   readonly activeNote = signal<Note | null>(null);
   readonly headings = signal<OutlineHeading[]>([]);
   readonly activeHeading = signal(-1);
+
+  /** Source, preview, or both side by side. Not remembered per note: each opened note starts as the settings say. */
+  protected readonly viewMode = signal<EditorViewMode>('source');
+  /** Text shown by the preview; follows the editor with a short delay while the preview is shown. */
+  protected readonly previewContent = signal('');
+  /** Line the preview must bring to the top (editor scrolled, side by side). */
+  protected readonly previewScroll = signal<PreviewScrollRequest | null>(null);
+  private previewDebounce: ReturnType<typeof setTimeout> | null = null;
+  /** Set while the editor scrolls because of the preview: that scroll must not be echoed back. */
+  private syncingFromPreview = false;
+
+  protected readonly viewModes: { id: EditorViewMode; label: string; shortcut: string | null; icon: string }[] = [
+    { id: 'source', label: 'Source', shortcut: null, icon: '<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>' },
+    { id: 'split', label: 'Preview to the side', shortcut: 'editor.previewSide', icon: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/>' },
+    { id: 'preview', label: 'Preview', shortcut: 'editor.preview', icon: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' },
+  ];
+
+  /** Whether a link target exists, shared by the editor decorations and the preview. */
+  protected readonly linkStatusOf = computed<(target: string) => LinkStatus>(() => {
+    const notes = this.notes.notes();
+    const resolve = createLinkResolver(notes.filter(n => !n.tags.includes(OVERLAY_NOTE_TAG)), this.folders.folders());
+    const ids = new Set(notes.map(n => n.id));
+    return target => linkStatus(target, resolve, id => ids.has(id));
+  });
   readonly ctxMenu = signal<{ items: ContextMenuEntry[]; x: number; y: number } | null>(null);
 
   private editorView: EditorView | null = null;
@@ -120,6 +177,7 @@ export class EditorComponent implements OnDestroy, OnChanges {
   private readonly lineNumbersCompartment = new Compartment();
   private readonly wrapCompartment = new Compartment();
   private readonly trailingLineCompartment = new Compartment();
+  private readonly linkStatusCompartment = new Compartment();
   private saveDebounce: ReturnType<typeof setTimeout> | null = null;
   private isUpdatingFromModel = false;
   private loadGeneration = 0;
@@ -157,12 +215,86 @@ export class EditorComponent implements OnDestroy, OnChanges {
       });
     });
 
+    // Links turn red / back to normal as notes are created, renamed or deleted
+    effect(() => {
+      const status = this.linkStatusOf();
+      untracked(() => {
+        this.editorView?.dispatch({ effects: this.linkStatusCompartment.reconfigure(linkStatusFacet.of(status)) });
+      });
+    });
+
     effect(() => {
       this.settingsService.appShortcuts();
       untracked(() => {
         this.editorView?.dispatch({ effects: this.shortcutsCompartment.reconfigure(this.buildShortcutsKeymap()) });
       });
     });
+  }
+
+  /** Applies a view mode; the preview gets the current text at once. */
+  protected setViewMode(mode: EditorViewMode): void {
+    if (mode !== 'source' && this.editorView) {
+      this.previewContent.set(this.editorView.state.doc.toString());
+    }
+    this.viewMode.set(mode);
+
+    if (mode !== 'preview') {
+      setTimeout(() => this.editorView?.focus(), 0);
+    }
+  }
+
+  /** Ctrl+Shift+V: preview ↔ source. */
+  togglePreview(): void {
+    this.setViewMode(this.viewMode() === 'preview' ? 'source' : 'preview');
+  }
+
+  /** Ctrl+K V: preview beside the editor ↔ source. */
+  togglePreviewSide(): void {
+    this.setViewMode(this.viewMode() === 'split' ? 'source' : 'split');
+  }
+
+  /** The preview was scrolled: the editor follows (side by side only). */
+  protected syncEditorToLine(line: number): void {
+    const view = this.editorView;
+
+    if (!view || this.viewMode() !== 'split') {
+      return;
+    }
+
+    const doc = view.state.doc;
+    const whole = Math.min(doc.lines, Math.max(1, Math.floor(line)));
+    const block = view.lineBlockAt(doc.line(whole).from);
+    const nextTop = whole < doc.lines ? view.lineBlockAt(doc.line(whole + 1).from).top : block.bottom;
+
+    this.syncingFromPreview = true;
+    view.scrollDOM.scrollTop = block.top + (line - whole) * (nextTop - block.top);
+  }
+
+  /** The editor was scrolled: the preview follows (side by side only). */
+  private syncPreviewToEditor(view: EditorView): void {
+    if (this.syncingFromPreview) {
+      this.syncingFromPreview = false;
+      return;
+    }
+
+    if (this.viewMode() !== 'split') {
+      return;
+    }
+
+    const block = view.lineBlockAtHeight(view.scrollDOM.scrollTop);
+    const line = view.state.doc.lineAt(block.from).number;
+    const ratio = block.height > 0 ? (view.scrollDOM.scrollTop - block.top) / block.height : 0;
+    this.previewScroll.set({ line: line + Math.max(0, Math.min(1, ratio)) });
+  }
+
+  /** While the preview is shown, it follows the text with a short delay (rendering the whole note on every key is wasted). */
+  private schedulePreviewRefresh(view: EditorView): void {
+    if (this.viewMode() === 'source') {
+      return;
+    }
+
+    if (this.previewDebounce) clearTimeout(this.previewDebounce);
+    this.previewDebounce = setTimeout(() => this.previewContent.set(view.state.doc.toString()), PREVIEW_REFRESH_MS);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -174,6 +306,7 @@ export class EditorComponent implements OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.editorView?.destroy();
     if (this.saveDebounce) clearTimeout(this.saveDebounce);
+    if (this.previewDebounce) clearTimeout(this.previewDebounce);
   }
 
   private async loadNote(id: number | null): Promise<void> {
@@ -202,6 +335,8 @@ export class EditorComponent implements OnDestroy, OnChanges {
       // Abort if a newer load was started while fetching
       if (generation !== this.loadGeneration) return;
       this.activeNote.set(note);
+      this.previewContent.set(note?.content ?? '');
+      this.viewMode.set(this.settingsService.settings().openInPreview ? 'preview' : 'source');
       // Wait for DOM to update
       setTimeout(() => {
         if (generation !== this.loadGeneration) return;
@@ -241,6 +376,7 @@ export class EditorComponent implements OnDestroy, OnChanges {
       }
       if (update.docChanged) {
         this.refreshOutline(update.view);
+        this.schedulePreviewRefresh(update.view);
       }
       if (update.docChanged && !this.isUpdatingFromModel) {
         const content = update.state.doc.toString();
@@ -387,7 +523,13 @@ export class EditorComponent implements OnDestroy, OnChanges {
       this.lineNumbersCompartment.of(this.buildLineNumbers()),
       this.trailingLineCompartment.of(this.buildTrailingLine()),
       linkNavigation(target => this.followLink(target)),
-      EditorView.domEventHandlers({ scroll: (_event, view) => { this.refreshActiveHeading(view); } }),
+      EditorView.domEventHandlers({
+        scroll: (_event, view) => {
+          this.refreshActiveHeading(view);
+          this.syncPreviewToEditor(view);
+        },
+      }),
+      this.linkStatusCompartment.of(linkStatusFacet.of(this.linkStatusOf())),
       // The concatenated overlay notes cannot be mapped back to their individual notes, hence no drafts either
       ...(readOnly
         ? [EditorState.readOnly.of(true), EditorView.editable.of(false), noteTimestamps, noteTimestampsTheme]
@@ -518,8 +660,8 @@ export class EditorComponent implements OnDestroy, OnChanges {
     return this.settingsService.settings().wordWrap ? EditorView.lineWrapping : [];
   }
 
-  /** Ctrl+click on a link: a note (by `note://id` or by path) opens in a tab, a web address in the browser. */
-  private followLink(target: string): void {
+  /** Ctrl+click on a link (or a click in the preview): a note (by `note://id` or by path) opens in a tab, a web address in the browser. */
+  protected followLink(target: string): void {
     const noteUrl = /^note:\/\/(?<id>\d+)$/.exec(target.trim());
     const notes = this.notes.notes();
     let noteId: number | null = noteUrl?.groups?.['id'] ? Number(noteUrl.groups['id']) : null;

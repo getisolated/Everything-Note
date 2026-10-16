@@ -199,7 +199,7 @@ Les fichiers de collection ne sont pas dans la base. Trois façons de les cherch
 - Sélection de la collection dans la sidebar → le graphe de la page d'accueil affiche cette collection (comme le filtre par dossier actuel).
 - Liens cassés dessinés en pointillés, comme les notes supprimées du core.
 
-## 16. Preview GitHub-like 🟢
+## 16. Preview GitHub-like ✅
 
 - Rendu : `markdown-it` + GFM (tables, tasks, autolinks, footnotes, callouts) + coloration syntaxique + **assainissement** (`DOMPurify`) — le contenu peut venir de fichiers externes.
 - CSS inspiré de `github-markdown-css`, adapté aux variables `--evn-*`.
@@ -211,7 +211,7 @@ Les fichiers de collection ne sont pas dans la base. Trois façons de les cherch
 
 **Décision** : preview **non éditable** pour l'instant ; le mode éditable (WYSIWYG) est gelé (`NF/feat/wysiwyg-preview`), à rediscuter plus tard.
 
-## 17. Mermaid 🟢
+## 17. Mermaid ✅
 
 - Blocs ` ```mermaid ` rendus en SVG dans la **preview uniquement**.
 - Lib `mermaid` en import dynamique (lourde, ~1 Mo), thème mermaid suit le thème de l'app.
@@ -266,7 +266,7 @@ Pin, drag & drop et restauration de session ne sont garantis que dans **pills**.
 
 **Décisions** : pas d'indicateur de chord ; suppression de la bascule dark/light.
 
-## 22. Liens non résolus en rouge 🟢
+## 22. Liens non résolus en rouge ✅
 
 Un lien local (note, `note://ID`, chemin relatif de collection) qui ne pointe vers rien est affiché en **rouge** (couleur d'erreur du thème) au lieu de la couleur de lien, dans l'éditeur et dans la preview. Tooltip « Lien introuvable ». Mis à jour quand la cible est créée, renommée ou supprimée.
 

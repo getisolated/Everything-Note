@@ -53,7 +53,14 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "@braintree/sanitize-url",
+              "cytoscape-cose-bilkent",
+              "cytoscape-fcose",
+              "dayjs",
+              "elkjs"
+            ]
           },
           "configurations": {
             "production": {

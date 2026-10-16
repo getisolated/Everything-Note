@@ -27,6 +27,9 @@ export const APP_SHORTCUTS: AppShortcutDefinition[] = [
     id: `tab.goto.${i + 1}`, label: `Go To Tab ${i + 1}`, defaultAccelerator: `CommandOrControl+Alt+${i + 1}`,
   })),
   { id: 'editor.find', label: 'Find In Note', defaultAccelerator: 'CommandOrControl+F' },
+  { id: 'editor.preview', label: 'Toggle Preview', defaultAccelerator: 'CommandOrControl+Shift+V' },
+  // Like VS Code: Ctrl+K then V alone
+  { id: 'editor.previewSide', label: 'Toggle Preview To The Side', defaultAccelerator: 'CommandOrControl+K, V' },
   { id: 'editor.save', label: 'Save Note', defaultAccelerator: 'CommandOrControl+S' },
   { id: 'editor.bold', label: 'Bold', defaultAccelerator: 'CommandOrControl+B' },
   { id: 'editor.italic', label: 'Italic', defaultAccelerator: 'CommandOrControl+I' },

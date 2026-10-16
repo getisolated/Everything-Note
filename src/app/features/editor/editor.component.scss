@@ -6,10 +6,63 @@
 }
 
 .editor-wrapper {
+  position: relative;
   display: flex;
   flex: 1;
   overflow: hidden;
   min-height: 0;
+}
+
+// ── View modes: source / side by side / preview ───────────────────────────────
+.view-modes {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  background: var(--evn-bg-panel);
+  border: 1px solid var(--evn-border-soft);
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+}
+
+.view-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--evn-text-soft);
+  cursor: pointer;
+
+  &:hover { color: var(--evn-text); background: rgba(var(--evn-hover-rgb), 0.07); }
+
+  &.active {
+    background: rgba(var(--evn-accent-strong-rgb), 0.3);
+    color: var(--evn-accent-text);
+  }
+}
+
+.preview {
+  flex: 1;
+}
+
+// Preview only: the editor stays alive (selection, history) but hidden
+.editor-wrapper[data-view-mode='preview'] .editor-host {
+  display: none;
+}
+
+.editor-wrapper[data-view-mode='split'] .preview {
+  border-left: 1px solid var(--evn-border-subtle);
 }
 
 .editor-host {

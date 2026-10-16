@@ -88,6 +88,13 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     control: 'checkbox',
   },
   {
+    key: 'openInPreview',
+    category: 'Editor',
+    title: 'Open Notes In Preview',
+    description: 'Open a note rendered like on GitHub (read-only) instead of its markdown source. The buttons at the top right of the note switch between source, side by side and preview.',
+    control: 'checkbox',
+  },
+  {
     key: 'formattingBarEnabled',
     category: 'Formatting Bar',
     title: 'Show Formatting Bar',

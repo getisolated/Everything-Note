@@ -34,6 +34,8 @@ export interface AppSettings {
   trailingLine: boolean;
   /** true: the h1/h2/h3 outline is shown on the right of the open note. */
   showOutline: boolean;
+  /** true: a note opens in preview (rendered, read-only) instead of its markdown source. */
+  openInPreview: boolean;
 }
 
 export type SettingsPatch = Partial<AppSettings>;
@@ -62,6 +64,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   wordWrap: true,
   trailingLine: false,
   showOutline: true,
+  openInPreview: false,
 };
 
 export const OVERLAY_NOTE_TAG = 'overlay';
