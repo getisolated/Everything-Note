@@ -9,6 +9,7 @@ import { NotesService } from '../../core/services/notes.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { LayoutService } from '../../core/services/layout.service';
+import { NoteExportService } from '../../core/services/note-export.service';
 import { OVERLAY_NOTES_TAB_ID, PaletteResult } from '../../core/models/note.model';
 
 @Component({
@@ -114,6 +115,7 @@ export class PaletteComponent implements OnDestroy {
   private tabs = inject(TabsService);
   private settings = inject(SettingsService);
   private layout = inject(LayoutService);
+  private noteExport = inject(NoteExportService);
 
   @ViewChild('inputEl') inputEl!: ElementRef<HTMLInputElement>;
 
@@ -179,6 +181,7 @@ export class PaletteComponent implements OnDestroy {
           action: () => { void this.copyNoteLink(); },
         }
       },
+      ...this.exportCommands(),
       {
         type: 'command',
         command: {
@@ -325,6 +328,26 @@ export class PaletteComponent implements OnDestroy {
         this.close();
         break;
     }
+  }
+
+  /** Copy / export of the note being edited (none on the home page or the quick notes). */
+  private exportCommands(): PaletteResult[] {
+    const noteId = this.tabs.activeNoteId();
+
+    if (noteId === null || !this.noteExport.canExport(noteId)) {
+      return [];
+    }
+
+    const command = (id: string, label: string, description: string, actionId: string): PaletteResult => ({
+      type: 'command',
+      command: { id, label, description, category: 'note', action: () => { void this.noteExport.runNoteAction(actionId, noteId); } },
+    });
+
+    return [
+      command('copy-note-content', 'Copy Note Content', 'Copy the markdown of the current note', 'export:copy'),
+      command('export-note-md', 'Export Note as Markdown…', 'Save the current note as a .md file', 'export:md'),
+      command('export-note-html', 'Export Note as HTML…', 'Save the current note as a standalone web page', 'export:html'),
+    ];
   }
 
   private openGraphView(): void {

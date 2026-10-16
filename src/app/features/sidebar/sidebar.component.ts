@@ -17,6 +17,7 @@ import { SettingsService } from '../../core/services/settings.service';
 import { SidebarStateService } from '../../core/services/sidebar-state.service';
 import { TabsService } from '../../core/services/tabs.service';
 import { UpdateService } from '../../core/services/update.service';
+import { FOLDER_EXPORT_MENU, NOTE_EXPORT_MENU, NoteExportService } from '../../core/services/note-export.service';
 import {
   buildFolderTree,
   canMoveFolder,
@@ -57,6 +58,7 @@ export class SidebarComponent {
   private readonly palette = inject(PaletteService);
   private readonly settings = inject(SettingsService);
   private readonly updates = inject(UpdateService);
+  private readonly noteExport = inject(NoteExportService);
 
   protected readonly updateInfo = this.updates.info;
   protected readonly updateLabel = this.updates.label;
@@ -297,6 +299,10 @@ export class SidebarComponent {
       { id: 'newFolder', label: 'New Subfolder', icon: ICON_NEW_FOLDER },
     ];
 
+    if (node.noteCount > 0) {
+      items.push({ divider: true }, FOLDER_EXPORT_MENU);
+    }
+
     // The default folder is always there: no rename, no delete
     if (!node.folder.isDefault) {
       items.push(
@@ -314,6 +320,8 @@ export class SidebarComponent {
     event.stopPropagation();
 
     const items: ContextMenuEntry[] = [
+      ...NOTE_EXPORT_MENU,
+      { divider: true },
       { id: 'delete', label: 'Delete Note', icon: ICON_DELETE, danger: true },
     ];
 
@@ -343,7 +351,16 @@ export class SidebarComponent {
     const { target } = menu;
     const folderId = target?.kind === 'folder' ? target.id : null;
 
+    if (target?.kind === 'note' && await this.noteExport.runNoteAction(actionId, target.id)) {
+      return;
+    }
+
     switch (actionId) {
+      case 'export:zip':
+        if (folderId !== null) {
+          await this.noteExport.exportFolder(folderId);
+        }
+        break;
       case 'newNote':
         await this.newNote(folderId ?? undefined);
         break;

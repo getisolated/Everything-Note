@@ -2,3 +2,7 @@
 export const app = {
   getPath: (): string => '',
 };
+
+export const dialog = {};
+
+export class BrowserWindow {}

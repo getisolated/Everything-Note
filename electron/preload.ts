@@ -37,6 +37,10 @@ const api = {
     ipcRenderer.invoke('folders:place', id, parentId, orderedIds),
   deleteFolder: (id: number, mode: 'moveToRoot' | 'deleteAll') => ipcRenderer.invoke('folders:delete', id, mode),
 
+  // Export: asks where to save, returns the written path or null
+  saveExport: (kind: 'md' | 'html' | 'zip', suggestedName: string, payload: unknown) =>
+    ipcRenderer.invoke('export:save', kind, suggestedName, payload),
+
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch: Record<string, unknown>) => ipcRenderer.invoke('settings:set', patch),

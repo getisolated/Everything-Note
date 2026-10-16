@@ -114,7 +114,7 @@ Le panneau de droite devient un conteneur générique de vues (sommaire, recherc
 - **Liste des résultats** sous les champs : ligne avec contexte et terme surligné, clic = va au résultat.
 - Champ pré-rempli avec la sélection ; libellés et champs alignés sur une grille.
 
-## 11. Partager / exporter / copier une note 🟢
+## 11. Partager / exporter / copier une note ✅
 
 Menu contextuel (onglet, sidebar, éditeur) + palette :
 - **Copier le contenu** (markdown brut).

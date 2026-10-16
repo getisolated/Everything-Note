@@ -10,6 +10,7 @@ import { LayoutService } from '../../core/services/layout.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { SidebarStateService } from '../../core/services/sidebar-state.service';
 import { ContextMenuComponent, ContextMenuEntry } from '../../shared/context-menu/context-menu.component';
+import { NOTE_EXPORT_MENU, NoteExportService } from '../../core/services/note-export.service';
 
 @Component({
   selector: 'app-tabs-bar',
@@ -175,6 +176,7 @@ export class TabsBarComponent {
   readonly dragSide = signal<'left' | 'right' | null>(null);
 
   // ── Context menu state ─────────────────────────────────────────────────────
+  private readonly noteExport = inject(NoteExportService);
   readonly ctxMenu = signal<{ items: ContextMenuEntry[]; x: number; y: number; tabIndex: number } | null>(null);
 
   // ── Navigation ─────────────────────────────────────────────────────────────
@@ -298,6 +300,10 @@ export class TabsBarComponent {
       { id: 'closeAll', label: 'Close All Tabs', icon: closeIcon, disabled: !hasClosableTab },
     ];
 
+    if (this.noteExport.canExport(tab.noteId)) {
+      items.push({ divider: true }, ...NOTE_EXPORT_MENU);
+    }
+
     this.ctxMenu.set({ items, x: event.clientX, y: event.clientY, tabIndex: index });
   }
 
@@ -305,6 +311,11 @@ export class TabsBarComponent {
     const menu = this.ctxMenu();
     if (!menu) return;
     const index = menu.tabIndex;
+    const noteId = this.tabs()[index]?.noteId;
+
+    if (noteId !== undefined && actionId.startsWith('export:')) {
+      void this.noteExport.runNoteAction(actionId, noteId);
+    }
 
     switch (actionId) {
       case 'pin':

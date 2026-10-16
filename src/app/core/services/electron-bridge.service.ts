@@ -51,6 +51,7 @@ interface ElectronAPI {
   getNotesByTag: (tag: string) => Promise<NoteRow[]>;
   getAllTags: () => Promise<string[]>;
   openExternal: (url: string) => Promise<void>;
+  saveExport: (kind: 'md' | 'html' | 'zip', suggestedName: string, payload: unknown) => Promise<string | null>;
   getSettings: () => Promise<AppSettings>;
   setSettings: (patch: SettingsPatch) => Promise<SettingsUpdateResult>;
   getUpdateInfo: () => Promise<UpdateInfo | null>;
@@ -106,6 +107,11 @@ export class ElectronBridgeService {
   isMaximized(): Promise<boolean> { return this.api?.isMaximized() ?? Promise.resolve(false); }
 
   openExternal(url: string): Promise<void> { return this.api?.openExternal(url) ?? Promise.resolve(); }
+
+  /** Asks where to save the export, then writes it: the written path, `null` when cancelled (or outside Electron). */
+  saveExport(kind: 'md' | 'html' | 'zip', suggestedName: string, payload: string | { path: string; content: string }[]): Promise<string | null> {
+    return this.api?.saveExport(kind, suggestedName, payload) ?? Promise.resolve(null);
+  }
 
   // Notes
   async getAllNotes(): Promise<Note[]> {
