@@ -7,6 +7,8 @@ export interface Note {
   folderId: number | null;
   /** Manual position among the notes of the same folder; `null` until the user reorders. */
   sortOrder: number | null;
+  /** `#rrggbb` chosen in the sidebar, `null` for none. */
+  color: string | null;
   createdAt: string;
   updatedAt: string;
 }

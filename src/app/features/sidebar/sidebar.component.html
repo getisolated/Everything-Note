@@ -31,6 +31,7 @@
   (dragover)="onRootDragOver($event)"
   (dragleave)="onTreeDragLeave($event)"
   (drop)="onDrop($event)"
+  (keydown.escape)="clearSelection()"
 >
   <div
     class="row all-notes"
@@ -52,13 +53,16 @@
       <div
         class="row folder"
         [class.selected]="selectedFolderId() === row.node.folder.id && activeNoteId() === null"
+        [class.multi-selected]="isMultiSelected('f' + row.node.folder.id)"
+        [class.colored]="!!row.node.folder.color"
+        [style.--item-color]="row.node.folder.color"
         [class.drop-target]="dropTarget() === row.node.folder.id"
         [style.padding-left.px]="8 + row.depth * 14"
         [style.--indent]="(24 + row.depth * 14) + 'px'"
         [attr.data-line]="lineSide('f' + row.node.folder.id)"
         tabindex="0"
         [attr.draggable]="!row.node.folder.isDefault && editingFolderId() !== row.node.folder.id"
-        (click)="onFolderClick(row.node)"
+        (click)="onFolderClick(row.node, $event)"
         (keydown.enter)="onFolderClick(row.node)"
         (keydown.f2)="onFolderKeydown($event, row.node, 'F2')"
         (keydown.delete)="onFolderKeydown($event, row.node, 'Delete')"
@@ -98,13 +102,17 @@
       <div
         class="row note"
         [class.selected]="activeNoteId() === row.note.id"
+        [class.multi-selected]="isMultiSelected('n' + row.note.id)"
+        [class.colored]="!!row.note.color"
+        [style.--item-color]="row.note.color"
         [style.padding-left.px]="8 + row.depth * 14"
         [style.--indent]="(24 + row.depth * 14) + 'px'"
         [attr.data-line]="lineSide('n' + row.note.id)"
         tabindex="0"
         draggable="true"
-        (click)="openNote(row.note)"
+        (click)="openNote(row.note, $event)"
         (keydown.enter)="openNote(row.note)"
+        (keydown.delete)="onNoteKeydown($event, row.note)"
         (contextmenu)="onNoteContextMenu($event, row.note)"
         (dragstart)="onDragStart($event, { kind: 'note', id: row.note.id })"
         (dragend)="onDragEnd()"
@@ -124,12 +132,16 @@
     <div
       class="row note"
       [class.selected]="activeNoteId() === note.id"
+      [class.multi-selected]="isMultiSelected('n' + note.id)"
+      [class.colored]="!!note.color"
+      [style.--item-color]="note.color"
       style="padding-left: 8px; --indent: 24px"
       [attr.data-line]="lineSide('n' + note.id)"
       tabindex="0"
       draggable="true"
-      (click)="openNote(note)"
+      (click)="openNote(note, $event)"
       (keydown.enter)="openNote(note)"
+      (keydown.delete)="onNoteKeydown($event, note)"
       (contextmenu)="onNoteContextMenu($event, note)"
       (dragstart)="onDragStart($event, { kind: 'note', id: note.id })"
       (dragend)="onDragEnd()"
@@ -215,6 +227,25 @@
     [y]="menu.y"
     (action)="onCtxAction($event)"
     (closed)="ctxMenu.set(null)"
+  />
+}
+
+@if (moveTargets(); as targets) {
+  <app-move-to-dialog
+    [title]="targets.length > 1 ? 'Move ' + targets.length + ' items to' : 'Move to'"
+    [options]="moveOptions()"
+    (chosen)="onMoveToChosen($event)"
+    (closed)="moveTargets.set(null)"
+  />
+}
+
+@if (colorPicker(); as picker) {
+  <app-color-picker
+    [value]="picker.value"
+    [x]="picker.x"
+    [y]="picker.y"
+    (picked)="onColorPicked($event)"
+    (closed)="colorPicker.set(null)"
   />
 }
 

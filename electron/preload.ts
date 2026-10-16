@@ -24,6 +24,7 @@ const api = {
   placeNote: (id: number, folderId: number | null, orderedIds: number[]) =>
     ipcRenderer.invoke('notes:place', id, folderId, orderedIds),
   deleteNote: (id: number) => ipcRenderer.invoke('notes:delete', id),
+  setNotesColor: (ids: number[], color: string | null) => ipcRenderer.invoke('notes:setColor', ids, color),
   searchNotes: (query: string) => ipcRenderer.invoke('notes:search', query),
   getNotesByTag: (tag: string) => ipcRenderer.invoke('notes:byTag', tag),
   getAllTags: () => ipcRenderer.invoke('notes:allTags'),
@@ -36,6 +37,8 @@ const api = {
   placeFolder: (id: number, parentId: number | null, orderedIds: number[]) =>
     ipcRenderer.invoke('folders:place', id, parentId, orderedIds),
   deleteFolder: (id: number, mode: 'moveToRoot' | 'deleteAll') => ipcRenderer.invoke('folders:delete', id, mode),
+  emptyFolder: (id: number) => ipcRenderer.invoke('folders:empty', id),
+  setFoldersColor: (ids: number[], color: string | null) => ipcRenderer.invoke('folders:setColor', ids, color),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),

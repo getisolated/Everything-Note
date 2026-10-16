@@ -122,7 +122,7 @@ Menu contextuel (onglet, sidebar, éditeur) + palette :
 - **Exporter un dossier** : `.zip` des notes en `.md`, arborescence conservée.
 - Liens (`note://ID`, `[](Folder/Note)`) gardés tels quels.
 
-## 12. Sélection multiple dans la sidebar + bulk delete / move 🟢
+## 12. Sélection multiple dans la sidebar + bulk delete / move ✅
 
 - `Ctrl+clic` : ajoute/retire de la sélection. `Shift+clic` : plage depuis l'ancre (ordre visuel des lignes). Clic simple : sélection unique + ouverture.
 - Sélection mixte notes + dossiers autorisée.
@@ -132,13 +132,13 @@ Menu contextuel (onglet, sidebar, éditeur) + palette :
 - `Échap` vide la sélection.
 - Pas de sélection mixte core + collections (stockages différents) ; la multi-sélection *au sein* d'une collection est ajoutée par #15.
 
-## 13. Vider un dossier 🟢
+## 13. Vider un dossier ✅
 
 Clic droit sur dossier → « Vider le dossier… » : supprime le contenu (notes + sous-dossiers), garde le dossier. Confirmation avec décompte (« 12 notes et 3 dossiers seront supprimés »). Disponible aussi sur `Inbox`.
 
 Toute suppression de fichier disque (collections, #15) passe par la **corbeille Windows** (`shell.trashItem`).
 
-## 14. Couleur de dossier / fichier 🟢
+## 14. Couleur de dossier / fichier ✅
 
 - **Color picker maison** (composant `shared/ui/color-picker`) : zone saturation/luminosité + curseur de teinte + champ hex + couleurs récentes + « aucune ». Clic droit → « Couleur… ».
 - Rendu d'un élément coloré : icône **outline** teintée, libellé teinté, fond de ligne de la même couleur à faible opacité (~12 %). Lisibilité vérifiée en clair et en sombre (ajustement de luminosité du libellé si contraste insuffisant).

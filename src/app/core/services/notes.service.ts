@@ -104,6 +104,13 @@ export class NotesService {
     this._notes.update(list => list.filter(n => n.id !== id));
   }
 
+  /** `null` removes the color. */
+  async setColor(ids: number[], color: string | null): Promise<void> {
+    await this.bridge.setNotesColor(ids, color);
+    const colored = new Set(ids);
+    this._notes.update(list => list.map(n => (colored.has(n.id) ? { ...n, color } : n)));
+  }
+
   /** Deletes the note when it has no content (cache is up to date: the editor flushes its saves first). */
   async deleteIfEmpty(id: number): Promise<boolean> {
     const note = this._notes().find(n => n.id === id);

@@ -14,6 +14,7 @@ interface NoteRow {
   folder_id?: number | null;
   folderId?: number | null;
   sort_order?: number | null;
+  color?: string | null;
   created_at?: string;
   createdAt?: string;
   updated_at?: string;
@@ -26,6 +27,7 @@ interface FolderRow {
   parent_id: number | null;
   is_default: number;
   sort_order: number | null;
+  color?: string | null;
   created_at: string;
 }
 
@@ -45,6 +47,9 @@ interface ElectronAPI {
   renameFolder: (id: number, name: string) => Promise<FolderRow | null>;
   moveFolder: (id: number, parentId: number | null) => Promise<FolderRow | null>;
   deleteFolder: (id: number, mode: FolderDeleteMode) => Promise<number[] | null>;
+  emptyFolder: (id: number) => Promise<number[] | null>;
+  setFoldersColor: (ids: number[], color: string | null) => Promise<boolean>;
+  setNotesColor: (ids: number[], color: string | null) => Promise<boolean>;
   updateNote: (id: number, data: { title?: string; content?: string; tags?: string }) => Promise<NoteRow | null>;
   deleteNote: (id: number) => Promise<boolean>;
   searchNotes: (query: string) => Promise<NoteRow[]>;
@@ -75,6 +80,7 @@ function mapRow(row: NoteRow): Note {
     tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags ?? []),
     folderId: row.folder_id ?? row.folderId ?? null,
     sortOrder: row.sort_order ?? null,
+    color: row.color ?? null,
     createdAt: row.created_at ?? row.createdAt ?? '',
     updatedAt: row.updated_at ?? row.updatedAt ?? '',
   };
@@ -88,6 +94,7 @@ function mapFolderRow(row: FolderRow): Folder {
     createdAt: row.created_at,
     isDefault: row.is_default === 1,
     sortOrder: row.sort_order ?? null,
+    color: row.color ?? null,
   };
 }
 
@@ -207,6 +214,22 @@ export class ElectronBridgeService {
   async deleteFolder(id: number, mode: FolderDeleteMode): Promise<number[] | null> {
     if (!this.api) return null;
     return this.api.deleteFolder(id, mode);
+  }
+
+  /** Deletes the content of the folder, keeping it. Returns the ids of the deleted notes, `null` when refused. */
+  async emptyFolder(id: number): Promise<number[] | null> {
+    if (!this.api) return null;
+    return this.api.emptyFolder(id);
+  }
+
+  async setFoldersColor(ids: number[], color: string | null): Promise<boolean> {
+    if (!this.api) return false;
+    return this.api.setFoldersColor(ids, color);
+  }
+
+  async setNotesColor(ids: number[], color: string | null): Promise<boolean> {
+    if (!this.api) return false;
+    return this.api.setNotesColor(ids, color);
   }
 
   // Settings

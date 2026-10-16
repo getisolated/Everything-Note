@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron/main';
 import { shell } from 'electron/common';
 import * as path from 'path';
-import { initDatabase, closeDatabase, noteOps, folderOps, FolderDeleteMode } from './database';
+import { initDatabase, closeDatabase, noteOps, folderOps, FolderDeleteMode, normalizeColor } from './database';
 import { registerGlobalShortcut, unregisterGlobalShortcuts } from './global-shortcut';
 import { applyOverlaySize, broadcastToWindows, hideOverlay, prepareOverlay, showOverlay, toggleOverlay } from './overlay';
 import { loadRenderer } from './renderer-loader';
@@ -176,6 +176,10 @@ safeHandle('notes:place', (_e, id: number, folderId: number | null, orderedIds: 
   noteOps.place(id, typeof folderId === 'number' ? folderId : null, parseIds(orderedIds)) ?? null
 );
 safeHandle('notes:delete', (_e, id: number) => { noteOps.delete(id); return true; });
+safeHandle('notes:setColor', (_e, ids: number[], color: string | null) => {
+  noteOps.setColor(parseIds(ids), normalizeColor(color));
+  return true;
+});
 safeHandle('notes:search', (_e, query: string) => noteOps.search(query));
 safeHandle('notes:byTag', (_e, tag: string) => noteOps.getByTag(tag));
 safeHandle('notes:allTags', () => noteOps.getAllTags());
@@ -205,6 +209,16 @@ safeHandle('folders:delete', (e, id: number, mode: FolderDeleteMode) => {
   const deletedNoteIds = folderOps.delete(id, mode === 'deleteAll' ? 'deleteAll' : 'moveToRoot');
   broadcastToWindows('notes:changed', undefined, e.sender);
   return deletedNoteIds;
+});
+
+safeHandle('folders:empty', (e, id: number) => {
+  const deletedNoteIds = typeof id === 'number' ? folderOps.empty(id) : null;
+  broadcastToWindows('notes:changed', undefined, e.sender);
+  return deletedNoteIds;
+});
+safeHandle('folders:setColor', (_e, ids: number[], color: string | null) => {
+  folderOps.setColor(parseIds(ids), normalizeColor(color));
+  return true;
 });
 
 // ── Settings & overlay ───────────────────────────────────────────────────────

@@ -82,4 +82,22 @@ export class FoldersService {
 
     return deletedNoteIds;
   }
+
+  /** Deletes the content of the folder (notes, sub-folders), keeping it. Returns the ids of the deleted notes. */
+  async empty(id: number): Promise<number[] | null> {
+    const deletedNoteIds = await this.bridge.emptyFolder(id);
+
+    if (deletedNoteIds !== null) {
+      await this.loadAll();
+    }
+
+    return deletedNoteIds;
+  }
+
+  /** `null` removes the color. */
+  async setColor(ids: number[], color: string | null): Promise<void> {
+    await this.bridge.setFoldersColor(ids, color);
+    const colored = new Set(ids);
+    this._folders.update(list => list.map(f => (colored.has(f.id) ? { ...f, color } : f)));
+  }
 }
