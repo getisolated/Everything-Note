@@ -79,6 +79,12 @@ pub struct RawSettings {
     pub collections_exclude: Option<Vec<Option<String>>>,
     /// Voir [`AppSettings::overlay_position`].
     pub overlay_position: RawPosition,
+    /// Voir [`AppSettings::mcp_enabled`].
+    pub mcp_enabled: Option<bool>,
+    /// Voir [`AppSettings::mcp_port`].
+    pub mcp_port: Option<f64>,
+    /// Voir [`AppSettings::mcp_token`].
+    pub mcp_token: Option<String>,
 }
 
 impl RawSettings {
@@ -119,6 +125,9 @@ impl RawSettings {
                     .collect(),
             ),
             overlay_position: raw_position(settings),
+            mcp_enabled: Some(settings.mcp_enabled),
+            mcp_port: Some(f64::from(settings.mcp_port)),
+            mcp_token: Some(settings.mcp_token.clone()),
         }
     }
 
@@ -164,6 +173,9 @@ impl RawSettings {
             open_in_preview: patch.open_in_preview.or(self.open_in_preview),
             collections_exclude: patch.collections_exclude.or(self.collections_exclude),
             overlay_position: merge_position(self.overlay_position, patch.overlay_position),
+            mcp_enabled: patch.mcp_enabled.or(self.mcp_enabled),
+            mcp_port: patch.mcp_port.or(self.mcp_port),
+            mcp_token: patch.mcp_token.or(self.mcp_token),
         }
     }
 }

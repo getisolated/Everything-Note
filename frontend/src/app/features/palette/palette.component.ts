@@ -465,7 +465,7 @@ export class PaletteComponent implements OnDestroy {
       return [];
     }
 
-    const command = (id: string, key: 'copyNoteContent' | 'exportNoteMd' | 'exportNoteHtml', actionId: string): PaletteResult => ({
+    const command = (id: string, key: 'copyNoteContent' | 'exportNoteMd' | 'exportNoteHtml' | 'exportNotePdf', actionId: string): PaletteResult => ({
       type: 'command',
       command: {
         id,
@@ -480,6 +480,7 @@ export class PaletteComponent implements OnDestroy {
       command('copy-note-content', 'copyNoteContent', 'export:copy'),
       command('export-note-md', 'exportNoteMd', 'export:md'),
       command('export-note-html', 'exportNoteHtml', 'export:html'),
+      command('export-note-pdf', 'exportNotePdf', 'export:pdf'),
     ];
   }
 

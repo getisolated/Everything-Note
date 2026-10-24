@@ -12,7 +12,7 @@ use platform::sync::lock;
 
 use crate::ports::{
     CollectionFiles, CollectionStore, CollectionWatcher, EntryKind, ExportWriter, FolderStore,
-    NoteStore, SettingsStore, ZipEntry,
+    NoteStore, PdfRenderer, SecretSource, SettingsStore, ZipEntry,
 };
 use crate::{AppError, AppResult};
 
@@ -422,17 +422,45 @@ impl SettingsStore for MemorySettings {
     }
 }
 
+/// Jetons prévisibles : `0…01`, `0…02`… ; `failing` simule l'absence de source de hasard.
+#[derive(Default)]
+pub struct CountingSecrets {
+    issued: Mutex<u64>,
+    failing: bool,
+}
+
+impl CountingSecrets {
+    /// Source qui échoue toujours.
+    pub fn failing() -> Self {
+        Self {
+            failing: true,
+            ..Self::default()
+        }
+    }
+}
+
+impl SecretSource for CountingSecrets {
+    fn new_token(&self) -> AppResult<String> {
+        if self.failing {
+            return Err(AppError::Storage("no randomness".to_owned()));
+        }
+        let mut issued = lock(&self.issued);
+        *issued += 1;
+        Ok(format!("{:064x}", *issued))
+    }
+}
+
 /// Écrivain d'export qui garde ce qu'on lui donne.
 #[derive(Default)]
 pub struct RecordingWriter {
-    texts: Mutex<Vec<(PathBuf, String)>>,
+    files: Mutex<Vec<(PathBuf, Vec<u8>)>>,
     zips: Mutex<Vec<ZipEntry>>,
 }
 
 impl RecordingWriter {
-    /// Fichiers texte écrits.
-    pub fn texts(&self) -> Vec<(PathBuf, String)> {
-        lock(&self.texts).clone()
+    /// Fichiers écrits.
+    pub fn files(&self) -> Vec<(PathBuf, Vec<u8>)> {
+        lock(&self.files).clone()
     }
 
     /// Entrées des archives écrites.
@@ -442,13 +470,43 @@ impl RecordingWriter {
 }
 
 impl ExportWriter for RecordingWriter {
-    fn write_text(&self, path: &Path, text: &str) -> AppResult<()> {
-        lock(&self.texts).push((path.to_path_buf(), text.to_owned()));
+    fn write_file(&self, path: &Path, content: &[u8]) -> AppResult<()> {
+        lock(&self.files).push((path.to_path_buf(), content.to_vec()));
         Ok(())
     }
 
     fn write_zip(&self, _path: &Path, entries: &[ZipEntry]) -> AppResult<()> {
         lock(&self.zips).extend_from_slice(entries);
         Ok(())
+    }
+}
+
+/// Rendu PDF factice : chaque page devient `%PDF ` suivi de son HTML ; une page `fail`
+/// échoue comme une impression refusée.
+#[derive(Default)]
+pub struct FakePdfRenderer {
+    calls: Mutex<Vec<Vec<String>>>,
+}
+
+impl FakePdfRenderer {
+    /// Lots de pages demandés.
+    pub fn calls(&self) -> Vec<Vec<String>> {
+        lock(&self.calls).clone()
+    }
+}
+
+impl PdfRenderer for FakePdfRenderer {
+    fn render(&self, pages: &[String], rendered: &mut dyn FnMut(usize)) -> AppResult<Vec<Vec<u8>>> {
+        lock(&self.calls).push(pages.to_vec());
+        let mut documents = Vec::with_capacity(pages.len());
+
+        for (index, page) in pages.iter().enumerate() {
+            if page == "fail" {
+                return Err(AppError::file_system("print failed"));
+            }
+            documents.push(format!("%PDF {page}").into_bytes());
+            rendered(index + 1);
+        }
+        Ok(documents)
     }
 }

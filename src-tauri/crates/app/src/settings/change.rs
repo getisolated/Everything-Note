@@ -43,6 +43,18 @@ impl SettingsChange {
         self.before.auto_update != self.after.auto_update
     }
 
+    /// Le serveur MCP doit redémarrer (ou s'arrêter) : activation, port ou jeton changé.
+    pub fn mcp_changed(&self) -> bool {
+        let server = |settings: &AppSettings| {
+            (
+                settings.mcp_enabled,
+                settings.mcp_port,
+                settings.mcp_token.clone(),
+            )
+        };
+        server(&self.before) != server(&self.after)
+    }
+
     /// Les dossiers ignorés des collections ont changé.
     pub fn collections_exclude_changed(&self) -> bool {
         self.before.collections_exclude != self.after.collections_exclude

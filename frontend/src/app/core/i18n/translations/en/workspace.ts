@@ -52,6 +52,8 @@ export const EN_WORKSPACE = {
   'workspace.palette.cmd.exportNoteMdDesc': 'Save the current note as a .md file',
   'workspace.palette.cmd.exportNoteHtml': 'Export Note as HTML…',
   'workspace.palette.cmd.exportNoteHtmlDesc': 'Save the current note as a standalone web page',
+  'workspace.palette.cmd.exportNotePdf': 'Export Note as PDF…',
+  'workspace.palette.cmd.exportNotePdfDesc': 'Save the current note as a PDF document (A4)',
   'workspace.palette.cmd.closeTab': 'Close Tab',
   'workspace.palette.cmd.closeTabDesc': 'Close the current tab',
   'workspace.palette.cmd.nextTab': 'Next Tab',

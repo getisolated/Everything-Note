@@ -22,7 +22,7 @@ import { TabsService } from '../../core/services/tabs.service';
 import { UpdateService } from '../../core/services/update.service';
 import { CollectionsService } from '../../core/services/collections.service';
 import { PlatformService } from '../../core/services/platform.service';
-import { NoteExportService, folderExportMenu, noteExportMenu } from '../../core/services/note-export.service';
+import { NoteExportService, folderExportMenu, noteExportMenu, selectionExportMenu } from '../../core/services/note-export.service';
 import {
   buildFolderTree,
   canMoveFolder,
@@ -484,7 +484,7 @@ export class SidebarComponent {
     ];
 
     if (node.noteCount > 0) {
-      items.push({ divider: true }, folderExportMenu(t));
+      items.push({ divider: true }, ...folderExportMenu(t));
     }
 
     items.push({ divider: true });
@@ -538,6 +538,8 @@ export class SidebarComponent {
   private openSelectionMenu(event: MouseEvent, target: SidebarDragItem, targets: SidebarDragItem[]): void {
     const t = this.i18n.t;
     const items: ContextMenuEntry[] = [
+      selectionExportMenu(t),
+      { divider: true },
       { id: 'moveTo', label: t('sidebar.menu.moveItems', { count: targets.length }), icon: ICON_MOVE },
       { id: 'color', label: t('sidebar.menu.color'), icon: ICON_COLOR },
       { divider: true },
@@ -576,10 +578,16 @@ export class SidebarComponent {
 
     switch (actionId) {
       case 'export:zip':
-        if (folderId !== null) {
-          await this.noteExport.exportFolder(folderId);
+      case 'export:pdf-zip': {
+        const format = actionId === 'export:zip' ? 'md' : 'pdf';
+
+        if (targets.length > 1) {
+          await this.noteExport.exportSelection(topLevelItems(targets, this.foldersService.folders(), this.treeNotes()), format);
+        } else if (folderId !== null) {
+          await this.noteExport.exportFolder(folderId, format);
         }
         break;
+      }
       case 'moveTo':
         this.moveTargets.set(topLevelItems(targets, this.foldersService.folders(), this.treeNotes()));
         break;

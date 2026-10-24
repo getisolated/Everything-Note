@@ -25,6 +25,14 @@ pub const OVERLAY_MAX_WIDTH: u32 = 800;
 pub const OVERLAY_MIN_HEIGHT: u32 = 200;
 /// Hauteur maximale de l'overlay.
 pub const OVERLAY_MAX_HEIGHT: u32 = 1200;
+/// Port par défaut du serveur MCP (choisi loin des ports usuels).
+pub const DEFAULT_MCP_PORT: u16 = 38427;
+/// Plus petit port accepté pour le serveur MCP (hors des ports réservés au système).
+pub const MCP_MIN_PORT: u16 = 1024;
+/// Plus grand port accepté pour le serveur MCP.
+pub const MCP_MAX_PORT: u16 = 65535;
+/// Longueur du jeton du serveur MCP : 32 octets aléatoires en hexadécimal minuscule.
+pub const MCP_TOKEN_LENGTH: usize = 64;
 
 /// Réglages complets et valides.
 #[derive(Debug, Clone, PartialEq)]
@@ -87,6 +95,13 @@ pub struct AppSettings {
     pub collections_exclude: Vec<String>,
     /// Dernière position choisie pour l'overlay ; `None` tant qu'il n'a pas été déplacé.
     pub overlay_position: Option<Position>,
+    /// Serveur MCP local (accès des IA aux notes) démarré.
+    pub mcp_enabled: bool,
+    /// Port du serveur MCP, sur `127.0.0.1` seulement.
+    pub mcp_port: u16,
+    /// Jeton exigé par le serveur MCP (`Authorization: Bearer …`) ; vide tant que le
+    /// serveur n'a jamais été activé. Seul le processus principal le génère.
+    pub mcp_token: String,
 }
 
 impl AppSettings {
@@ -102,6 +117,11 @@ impl AppSettings {
     pub fn same_global_shortcut(&self, other: &Self) -> bool {
         self.global_shortcut == other.global_shortcut
             && self.global_shortcut_physical_key == other.global_shortcut_physical_key
+    }
+
+    /// Le serveur MCP est activé sans jeton : il faut en générer un avant de le démarrer.
+    pub fn needs_mcp_token(&self) -> bool {
+        self.mcp_enabled && self.mcp_token.is_empty()
     }
 }
 
@@ -135,8 +155,24 @@ impl Default for AppSettings {
             open_in_preview: false,
             collections_exclude: DEFAULT_COLLECTION_EXCLUDES.map(str::to_owned).to_vec(),
             overlay_position: None,
+            mcp_enabled: false,
+            mcp_port: DEFAULT_MCP_PORT,
+            mcp_token: String::new(),
         }
     }
+}
+
+/// Jeton MCP bien formé : vide (jamais généré) ou [`MCP_TOKEN_LENGTH`] chiffres
+/// hexadécimaux minuscules.
+///
+/// ```
+/// assert!(domain::settings::is_mcp_token(""));
+/// assert!(domain::settings::is_mcp_token(&"a1".repeat(32)));
+/// assert!(!domain::settings::is_mcp_token("secret"));
+/// ```
+pub fn is_mcp_token(token: &str) -> bool {
+    let hex = |byte: &u8| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte);
+    token.is_empty() || (token.len() == MCP_TOKEN_LENGTH && token.as_bytes().iter().all(hex))
 }
 
 #[cfg(test)]

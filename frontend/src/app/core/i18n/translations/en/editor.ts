@@ -33,7 +33,12 @@ export const EN_EDITOR = {
   'editor.export.copyContent': 'Copy Content',
   'editor.export.markdown': 'Markdown…',
   'editor.export.html': 'HTML…',
-  'editor.export.zip': 'Export as ZIP…',
+  'editor.export.pdf': 'PDF…',
+  'editor.export.zip': 'Export as ZIP of Markdown…',
+  'editor.export.pdfZip': 'Export as ZIP of PDF…',
+  'editor.export.export': 'Export',
+  'editor.export.selectionMarkdown': 'Markdown (ZIP)…',
+  'editor.export.selectionPdf': 'PDF (ZIP)…',
 
   // Find panel
   'editor.find.showReplace': 'Show Replace',
@@ -134,6 +139,7 @@ export const EN_EDITOR = {
   'editor.draft.confirm': 'Confirm',
   'editor.draft.discard': 'Discard',
   'editor.quickNote.edit': 'Edit',
+  'editor.quickNote.convert': 'Convert to note',
 
   // Backlinks
   'editor.backlinks.title': 'Backlinks',

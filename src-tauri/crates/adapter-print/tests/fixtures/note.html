@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF export check</title>
+<style>
+body { margin: 0; background: #fff; color: #1f2328; font-family: -apple-system, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }
+.markdown-body { max-width: 860px; margin: 0 auto; padding: 32px 40px 64px; word-wrap: break-word; }
+.markdown-body > *:first-child { margin-top: 0; }
+p, blockquote, ul, ol, table, pre, .markdown-alert, .mermaid-diagram { margin: 0 0 16px; }
+h1, h2, h3, h4, h5, h6 { margin: 24px 0 16px; font-weight: 600; line-height: 1.25; }
+h1 { font-size: 2em; padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }
+h2 { font-size: 1.5em; padding-bottom: .3em; border-bottom: 1px solid #d1d9e0; }
+h3 { font-size: 1.25em; } h4 { font-size: 1em; } h5 { font-size: .875em; } h6 { font-size: .85em; color: #59636e; }
+a { color: #0969da; text-decoration: none; } a:hover { text-decoration: underline; }
+hr { height: 4px; margin: 24px 0; padding: 0; background: #d1d9e0; border: 0; }
+blockquote { padding: 0 1em; color: #59636e; border-left: .25em solid #d1d9e0; }
+ul, ol { padding-left: 2em; }
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin: 0 .35em .2em -1.4em; vertical-align: middle; }
+code { padding: .2em .4em; font-family: Consolas, ui-monospace, 'SF Mono', Menlo, monospace; font-size: 85%; background: rgba(129, 139, 152, .12); border-radius: 6px; }
+pre { padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45; background: #f6f8fa; border-radius: 6px; }
+pre code { padding: 0; font-size: 100%; background: transparent; white-space: pre; }
+table { display: block; width: max-content; max-width: 100%; overflow: auto; border-collapse: collapse; }
+th, td { padding: 6px 13px; border: 1px solid #d1d9e0; } th { font-weight: 600; } tr:nth-child(2n) { background: #f6f8fa; }
+img { max-width: 100%; }
+.markdown-alert { padding: 8px 16px; border-left: .25em solid var(--alert); } .markdown-alert-title { margin-bottom: 4px; font-weight: 500; color: var(--alert); }
+.markdown-alert-note { --alert: #0969da; } .markdown-alert-tip { --alert: #1a7f37; } .markdown-alert-important { --alert: #0b7d8a; }
+.markdown-alert-warning { --alert: #9a6700; } .markdown-alert-caution { --alert: #d1242f; }
+.badge-new { display: inline-block; margin-right: .5em; padding: .3em .75em .25em; font-size: .68rem; font-weight: 600; line-height: 1.5; letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; vertical-align: .1em; color: #fff; background: #7344f5; border-radius: 999px; }
+.new-block { position: relative; margin-top: 28px; padding: 26px 12px 10px; background: #7344f511; border: 1px solid #7344f555; border-radius: 8px; } .new-block .badge-new { position: absolute; top: 0; left: 10px; margin: 0; transform: translateY(-50%); } .new-block > :last-child { margin-bottom: 0; }
+.footnotes { font-size: 12px; color: #59636e; border-top: 1px solid #d1d9e0; }
+.mermaid-diagram { display: flex; justify-content: center; } .mermaid-diagram svg { max-width: 100%; height: auto; }
+.mermaid-error { color: #d1242f; font-family: Consolas, ui-monospace, 'SF Mono', Menlo, monospace; white-space: pre-wrap; }
+.tok-keyword, .tok-controlKeyword, .tok-modifier { color: #cf222e; } .tok-string, .tok-string2 { color: #0a3069; }
+.tok-number, .tok-bool, .tok-atom, .tok-constant { color: #0550ae; } .tok-comment, .tok-meta { color: #59636e; font-style: italic; }
+.tok-variableName, .tok-propertyName { color: #953800; } .tok-definition, .tok-function { color: #8250df; }
+.tok-typeName, .tok-className { color: #953800; } .tok-regexp, .tok-escape { color: #116329; } .tok-invalid { color: #82071e; }
+.tok-heading { color: #0550ae; font-weight: 600; } .tok-link, .tok-url { color: #0969da; }
+
+@page { size: A4; margin: 18mm; }
+@media print {
+html, body { background: #fff !important; }
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.markdown-body { max-width: none; margin: 0; padding: 0; }
+pre, tr, blockquote, img, .markdown-alert, .mermaid-diagram, .new-block { break-inside: avoid; page-break-inside: avoid; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid; page-break-after: avoid; }
+pre, pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { overflow: visible; }
+table { display: table; width: auto; overflow: visible; }
+}
+</style>
+</head>
+<body>
+<article class="markdown-body"><h1>PDF export check</h1>
+<p>Paragraph 1. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 2. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 3. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 4. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 5. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 6. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<h2>Table</h2>
+<table><thead><tr><th>Name</th><th>Kind</th><th>Size</th></tr></thead><tbody><tr><td>Row 1</td><td><code>kind-0</code></td><td>128 KB</td></tr><tr><td>Row 2</td><td><code>kind-1</code></td><td>256 KB</td></tr><tr><td>Row 3</td><td><code>kind-2</code></td><td>384 KB</td></tr><tr><td>Row 4</td><td><code>kind-3</code></td><td>512 KB</td></tr><tr><td>Row 5</td><td><code>kind-4</code></td><td>640 KB</td></tr><tr><td>Row 6</td><td><code>kind-5</code></td><td>768 KB</td></tr><tr><td>Row 7</td><td><code>kind-6</code></td><td>896 KB</td></tr><tr><td>Row 8</td><td><code>kind-7</code></td><td>1024 KB</td></tr></tbody></table>
+<p>Paragraph 7. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 8. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 9. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 10. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 11. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<h2>Code</h2>
+<pre><code class="language-rust"><span class="tok-keyword">fn</span> <span class="tok-definition">main</span>() {
+    <span class="tok-keyword">let</span> <span class="tok-variableName">answer</span> = <span class="tok-number">42</span>; <span class="tok-comment">// a comment</span>
+    <span class="tok-function">println!</span>(<span class="tok-string">"{answer} and a very long line that must wrap inside the page instead of being clipped by the right margin of the A4 sheet"</span>);
+}</code></pre>
+<h2>Diagram</h2>
+<div class="mermaid-diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" width="420" height="120">
+<rect x="10" y="40" width="120" height="40" rx="6" fill="#ececff" stroke="#9370db"/><text x="70" y="65" text-anchor="middle" font-size="14">Start</text>
+<line x1="130" y1="60" x2="290" y2="60" stroke="#333" stroke-width="2"/><polygon points="290,54 302,60 290,66" fill="#333"/>
+<rect x="302" y="40" width="110" height="40" rx="6" fill="#ececff" stroke="#9370db"/><text x="357" y="65" text-anchor="middle" font-size="14">PDF</text>
+</svg></div>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">Note</p><p>An alert block printed with its colored border.</p></div>
+<ul><li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" checked disabled> done</li><li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled> to do</li></ul>
+<p>Paragraph 12. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 13. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 14. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 15. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 16. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 17. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 18. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 19. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 20. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 21. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 22. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<p>Paragraph 23. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Accents : éàèùç — « guillemets ».</p>
+<h2>End</h2><p>Last paragraph of the note.</p></article>
+</body>
+</html>

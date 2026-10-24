@@ -13,8 +13,8 @@ use zip::write::{SimpleFileOptions, ZipWriter};
 pub struct DiskExportWriter;
 
 impl ExportWriter for DiskExportWriter {
-    fn write_text(&self, path: &Path, text: &str) -> AppResult<()> {
-        std::fs::write(path, text).map_err(AppError::file_system)
+    fn write_file(&self, path: &Path, content: &[u8]) -> AppResult<()> {
+        std::fs::write(path, content).map_err(AppError::file_system)
     }
 
     fn write_zip(&self, path: &Path, entries: &[ZipEntry]) -> AppResult<()> {
@@ -27,7 +27,7 @@ impl ExportWriter for DiskExportWriter {
                 .start_file(entry.path.as_str(), options)
                 .map_err(AppError::file_system)?;
             archive
-                .write_all(entry.content.as_bytes())
+                .write_all(&entry.content)
                 .map_err(AppError::file_system)?;
         }
         archive.finish().map_err(AppError::file_system)?;
@@ -51,8 +51,8 @@ mod tests {
                 content: "# Été\n\nContenu".into(),
             },
             ZipEntry {
-                path: "b.md".into(),
-                content: String::new(),
+                path: "b.pdf".into(),
+                content: vec![0x25, 0x50, 0x44, 0x46, 0xff, 0x00],
             },
         ];
 
@@ -67,5 +67,22 @@ mod tests {
             .read_to_string(&mut text)
             .unwrap();
         assert_eq!(text, "# Été\n\nContenu");
+        let mut bytes = Vec::new();
+        archive
+            .by_name("b.pdf")
+            .unwrap()
+            .read_to_end(&mut bytes)
+            .unwrap();
+        assert_eq!(bytes, [0x25, 0x50, 0x44, 0x46, 0xff, 0x00]);
+    }
+
+    #[test]
+    fn writes_a_file_as_is() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("note.pdf");
+
+        DiskExportWriter.write_file(&path, b"%PDF-1.4").unwrap();
+
+        assert_eq!(std::fs::read(&path).unwrap(), b"%PDF-1.4");
     }
 }

@@ -6,14 +6,129 @@ use domain::settings::{AppSettings, RawPosition, RawSettings};
 use platform::sync::lock;
 
 use super::SettingsService;
-use crate::testing::MemorySettings;
+use crate::testing::{CountingSecrets, MemorySettings};
 
 fn service(stored: Option<RawSettings>) -> (Arc<MemorySettings>, SettingsService) {
+    service_with(stored, CountingSecrets::default())
+}
+
+fn service_with(
+    stored: Option<RawSettings>,
+    secrets: CountingSecrets,
+) -> (Arc<MemorySettings>, SettingsService) {
     let store = Arc::new(MemorySettings {
         stored: std::sync::Mutex::new(stored),
         ..MemorySettings::default()
     });
-    (store.clone(), SettingsService::new(store))
+    (
+        store.clone(),
+        SettingsService::new(store, Arc::new(secrets)),
+    )
+}
+
+/// Jeton n° `n` de `CountingSecrets`.
+fn token(n: u64) -> String {
+    format!("{n:064x}")
+}
+
+#[test]
+fn generates_the_mcp_token_on_the_first_activation_only() {
+    let (_, service) = service(None);
+    let enable = RawSettings {
+        mcp_enabled: Some(true),
+        ..RawSettings::default()
+    };
+
+    let enabled = service.candidate(enable.clone());
+    assert!(enabled.mcp_enabled);
+    assert_eq!(enabled.mcp_token, token(1));
+
+    service.commit(enabled);
+    let disabled = service.candidate(RawSettings {
+        mcp_enabled: Some(false),
+        ..RawSettings::default()
+    });
+    assert_eq!(disabled.mcp_token, token(1));
+    service.commit(disabled);
+    assert_eq!(service.candidate(enable).mcp_token, token(1));
+}
+
+#[test]
+fn never_takes_the_mcp_token_from_the_renderer() {
+    let (_, service) = service(None);
+    let patch = RawSettings {
+        mcp_token: Some("a".repeat(64)),
+        ..RawSettings::default()
+    };
+
+    assert_eq!(service.candidate(patch).mcp_token, "");
+}
+
+#[test]
+fn regenerates_and_saves_the_mcp_token() {
+    let (store, service) = service(None);
+    service.commit(service.candidate(RawSettings {
+        mcp_enabled: Some(true),
+        ..RawSettings::default()
+    }));
+
+    let change = service.regenerate_mcp_token().unwrap();
+
+    assert_eq!(change.before.mcp_token, token(1));
+    assert_eq!(change.after.mcp_token, token(2));
+    assert!(change.mcp_changed());
+    assert_eq!(
+        lock(&store.saved).last().map(|s| s.mcp_token.clone()),
+        Some(token(2))
+    );
+}
+
+#[test]
+fn keeps_the_mcp_server_off_without_randomness() {
+    let (_, service) = service_with(None, CountingSecrets::failing());
+
+    let candidate = service.candidate(RawSettings {
+        mcp_enabled: Some(true),
+        ..RawSettings::default()
+    });
+
+    assert!(!candidate.mcp_enabled && candidate.mcp_token.is_empty());
+    assert!(service.regenerate_mcp_token().is_err());
+}
+
+#[test]
+fn gives_a_token_to_a_server_enabled_by_hand() {
+    let (store, service) = service(Some(RawSettings {
+        language: Some("en".into()),
+        mcp_enabled: Some(true),
+        ..RawSettings::default()
+    }));
+
+    let loaded = service.load(None);
+
+    assert_eq!(loaded.mcp_token, token(1));
+    assert_eq!(
+        lock(&store.saved).last().map(|s| s.mcp_token.clone()),
+        Some(token(1))
+    );
+}
+
+#[test]
+fn restarts_the_mcp_server_only_when_it_changes() {
+    let (_, service) = service(None);
+
+    let port = service.commit(AppSettings {
+        mcp_port: 40000,
+        ..AppSettings::default()
+    });
+    let other = service.commit(AppSettings {
+        mcp_port: 40000,
+        word_wrap: false,
+        ..AppSettings::default()
+    });
+
+    assert!(port.mcp_changed());
+    assert!(!other.mcp_changed());
 }
 
 #[test]

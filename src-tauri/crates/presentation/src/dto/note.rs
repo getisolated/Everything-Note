@@ -73,14 +73,26 @@ impl From<NoteChangesDto> for NoteChanges {
     }
 }
 
-/// Une note d'un export de dossier.
+/// Une note d'un export en archive (dossier ou sélection).
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, TS)]
 #[ts(export)]
 pub struct ExportedNoteDto {
-    /// Chemin sous le dossier exporté (dossiers puis titre, sans extension).
+    /// Chemin dans l'archive (dossiers puis titre, sans extension).
     pub path: String,
-    /// Texte markdown.
+    /// Texte markdown, ou page HTML autonome pour une archive de PDF.
     pub content: String,
+}
+
+/// Avancement d'un export en PDF : `index` documents rendus sur `total`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
+#[ts(export)]
+pub struct ExportProgressDto {
+    /// Documents rendus (de 1 à `total`).
+    #[ts(type = "number")]
+    pub index: usize,
+    /// Documents à rendre.
+    #[ts(type = "number")]
+    pub total: usize,
 }
 
 impl From<ExportedNoteDto> for ExportedNote {

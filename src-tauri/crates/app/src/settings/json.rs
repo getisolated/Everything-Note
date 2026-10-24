@@ -45,6 +45,9 @@ pub fn raw_from_json(value: &Value) -> RawSettings {
         overlay_position: object
             .get("overlayPosition")
             .map_or(RawPosition::Absent, position),
+        mcp_enabled: flag("mcpEnabled"),
+        mcp_port: number("mcpPort"),
+        mcp_token: text("mcpToken"),
     }
 }
 
@@ -107,6 +110,9 @@ pub fn settings_to_json(settings: &AppSettings) -> Value {
         "openInPreview": settings.open_in_preview,
         "collectionsExclude": settings.collections_exclude,
         "overlayPosition": settings.overlay_position.map(|p| json!({ "x": p.x, "y": p.y })),
+        "mcpEnabled": settings.mcp_enabled,
+        "mcpPort": settings.mcp_port,
+        "mcpToken": settings.mcp_token,
     })
 }
 
@@ -130,6 +136,9 @@ mod tests {
             global_shortcut_physical_key: Some("Digit1".to_owned()),
             word_wrap: false,
             show_menu_bar_icon: false,
+            mcp_enabled: true,
+            mcp_port: 40000,
+            mcp_token: "f".repeat(domain::settings::MCP_TOKEN_LENGTH),
             ..AppSettings::default()
         };
 

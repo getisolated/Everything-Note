@@ -34,6 +34,16 @@ impl FoldersService {
         self.folders.all()
     }
 
+    /// Le dossier par défaut (`Inbox`), où arrivent les notes créées sans dossier ; `None`
+    /// s'il n'existe pas (encore).
+    pub fn default_folder_id(&self) -> AppResult<Option<i64>> {
+        let folders = self.folders.all()?;
+        Ok(folders
+            .iter()
+            .find(|folder| folder.is_default)
+            .map(|folder| folder.id))
+    }
+
     /// Crée un dossier.
     pub fn create(&self, name: &str, parent_id: Option<i64>) -> AppResult<Option<Folder>> {
         let Some(name) = normalize_folder_name(name) else {

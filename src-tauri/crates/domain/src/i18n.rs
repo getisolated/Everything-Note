@@ -50,6 +50,8 @@ pub enum MessageKey {
     FilterMarkdown,
     /// Filtre de pages HTML.
     FilterHtml,
+    /// Filtre de documents PDF.
+    FilterPdf,
     /// Filtre d'archives ZIP.
     FilterZip,
     /// Menu d'application (macOS) : à propos.
@@ -111,6 +113,7 @@ fn english(key: MessageKey) -> &'static str {
         MessageKey::DialogOpenFile => "Open Markdown File",
         MessageKey::FilterMarkdown => "Markdown",
         MessageKey::FilterHtml => "HTML page",
+        MessageKey::FilterPdf => "PDF document",
         MessageKey::FilterZip => "ZIP archive",
         MessageKey::MenuAbout => "About Daftr",
         MessageKey::MenuServices => "Services",
@@ -142,6 +145,7 @@ fn french(key: MessageKey) -> &'static str {
         MessageKey::DialogOpenFile => "Ouvrir un fichier Markdown",
         MessageKey::FilterMarkdown => "Markdown",
         MessageKey::FilterHtml => "Page HTML",
+        MessageKey::FilterPdf => "Document PDF",
         MessageKey::FilterZip => "Archive ZIP",
         // Libellés de macOS en français
         MessageKey::MenuAbout => "À propos de Daftr",

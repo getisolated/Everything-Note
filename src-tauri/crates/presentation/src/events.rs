@@ -18,5 +18,9 @@ pub const UPDATE_AVAILABLE: &str = "update:available";
 pub const UPDATE_PROGRESS: &str = "update:progress";
 /// Installeur téléchargé et vérifié (charge utile : `UpdateInfoDto`).
 pub const UPDATE_DOWNLOADED: &str = "update:downloaded";
+/// État du serveur MCP changé (charge utile : `McpStatusDto`).
+pub const MCP_STATUS: &str = "mcp:status";
 /// Échec du téléchargement (charge utile : message).
 pub const UPDATE_DOWNLOAD_FAILED: &str = "update:download-failed";
+/// Avancement d'un export en PDF (charge utile : `ExportProgressDto`).
+pub const EXPORT_PROGRESS: &str = "export:progress";

@@ -5,7 +5,7 @@ use tauri::AppHandle;
 
 use crate::state::desktop;
 use crate::windows::overlay;
-use crate::{startup, tray, updater};
+use crate::{mcp, startup, tray, updater};
 
 /// Applique ce que le changement implique (le raccourci global est déjà enregistré par
 /// l'appelant, avant d'accepter le changement).
@@ -27,6 +27,9 @@ pub fn apply(app: &AppHandle, change: &SettingsChange) {
     }
     if change.auto_update_changed() {
         updater::on_auto_update_changed(app);
+    }
+    if change.mcp_changed() {
+        mcp::sync(app);
     }
     if change.collections_exclude_changed() {
         desktop(app)

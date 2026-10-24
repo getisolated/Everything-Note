@@ -114,3 +114,12 @@ fn empties_any_known_folder_including_the_default_one() {
     assert_eq!(service.empty(1).unwrap(), Some(vec![3]));
     assert_eq!(service.empty(99).unwrap(), None);
 }
+
+#[test]
+fn finds_the_default_folder() {
+    let (_, service) = fixture();
+    assert_eq!(service.default_folder_id().unwrap(), Some(1));
+
+    let without = FoldersService::new(Arc::new(MemoryFolders::with(vec![folder(2, None, false)])));
+    assert_eq!(without.default_folder_id().unwrap(), None);
+}

@@ -14,4 +14,15 @@ describe('buildHtmlDocument', () => {
   it('declares the language of the page', () => {
     expect(buildHtmlDocument('T', '<p>Salut</p>', 'fr')).toContain('<html lang="fr">');
   });
+
+  it('adds the print stylesheet only for a PDF export', () => {
+    const page = buildHtmlDocument('T', '<p>x</p>', 'en');
+    const printed = buildHtmlDocument('T', '<p>x</p>', 'en', { print: true });
+
+    expect(page).not.toContain('@page');
+    expect(printed).toContain('@page { size: A4; margin: 18mm; }');
+    expect(printed).toContain('print-color-adjust: exact');
+    expect(printed).toContain('break-inside: avoid');
+    expect(printed).not.toContain('<script');
+  });
 });

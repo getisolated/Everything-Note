@@ -36,12 +36,37 @@ img { max-width: 100%; }
 .tok-heading { color: #0550ae; font-weight: 600; } .tok-link, .tok-url { color: #0969da; }
 `;
 
+/**
+ * Added for a PDF export (the page is printed by the system web view): A4 pages, the page margins replace the padding,
+ * white background and colors kept, long lines wrapped instead of scrolled, blocks not split across pages.
+ */
+const PRINT_CSS = `
+@page { size: A4; margin: 18mm; }
+@media print {
+html, body { background: #fff !important; }
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.markdown-body { max-width: none; margin: 0; padding: 0; }
+pre, tr, blockquote, img, .markdown-alert, .mermaid-diagram, .new-block { break-inside: avoid; page-break-inside: avoid; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid; page-break-after: avoid; }
+pre, pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { overflow: visible; }
+table { display: table; width: auto; overflow: visible; }
+}
+`;
+
+export interface HtmlDocumentOptions {
+  /** Adds the print stylesheet, for a PDF export. */
+  print?: boolean;
+}
+
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /** A self-contained HTML page (inline style, no script) around an already sanitized note body, declared in `language`. */
-export function buildHtmlDocument(title: string, bodyHtml: string, language: Language): string {
+export function buildHtmlDocument(title: string, bodyHtml: string, language: Language, options: HtmlDocumentOptions = {}): string {
+  const css = options.print ? EXPORT_CSS + PRINT_CSS : EXPORT_CSS;
+
   return [
     '<!doctype html>',
     `<html lang="${language}">`,
@@ -49,7 +74,7 @@ export function buildHtmlDocument(title: string, bodyHtml: string, language: Lan
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<title>${escapeHtml(title)}</title>`,
-    `<style>${EXPORT_CSS}</style>`,
+    `<style>${css}</style>`,
     '</head>',
     '<body>',
     `<article class="markdown-body">${bodyHtml}</article>`,

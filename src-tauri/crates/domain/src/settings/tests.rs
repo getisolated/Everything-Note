@@ -414,3 +414,85 @@ fn system_follows_the_os_mode() {
         ThemeId::SolarizedLight
     );
 }
+
+#[test]
+fn keeps_the_mcp_server_off_on_its_default_port_without_a_token() {
+    let defaults = AppSettings::default();
+
+    assert!(!defaults.mcp_enabled);
+    assert_eq!(defaults.mcp_port, DEFAULT_MCP_PORT);
+    assert!(defaults.mcp_token.is_empty());
+    assert!(!defaults.needs_mcp_token());
+}
+
+#[test]
+fn bounds_the_mcp_port() {
+    let port = |value: f64| {
+        sanitize(RawSettings {
+            mcp_port: Some(value),
+            ..RawSettings::default()
+        })
+        .mcp_port
+    };
+
+    assert_eq!(port(4000.0), 4000);
+    assert_eq!(port(80.0), MCP_MIN_PORT);
+    assert_eq!(port(70000.0), MCP_MAX_PORT);
+    assert_eq!(port(8080.4), 8080);
+    assert_eq!(port(f64::NAN), DEFAULT_MCP_PORT);
+}
+
+#[test]
+fn accepts_only_a_well_formed_mcp_token() {
+    let current = "0".repeat(MCP_TOKEN_LENGTH);
+    let token = |value: &str| {
+        let base = AppSettings {
+            mcp_token: current.clone(),
+            ..AppSettings::default()
+        };
+        let raw = RawSettings {
+            mcp_token: text(value),
+            ..RawSettings::default()
+        };
+        sanitize_settings(&raw, &base).mcp_token
+    };
+    let valid = "ab12".repeat(16);
+
+    assert_eq!(token(&valid), valid);
+    assert_eq!(token(""), "");
+    assert_eq!(token("secret"), current);
+    assert_eq!(token(&"AB12".repeat(16)), current);
+    assert_eq!(token(&"g".repeat(MCP_TOKEN_LENGTH)), current);
+}
+
+#[test]
+fn needs_a_token_once_the_mcp_server_is_enabled() {
+    let enabled = sanitize(RawSettings {
+        mcp_enabled: Some(true),
+        ..RawSettings::default()
+    });
+    let with_token = AppSettings {
+        mcp_token: "a".repeat(MCP_TOKEN_LENGTH),
+        ..enabled.clone()
+    };
+
+    assert!(enabled.mcp_enabled);
+    assert!(enabled.needs_mcp_token());
+    assert!(!with_token.needs_mcp_token());
+}
+
+#[test]
+fn merges_the_mcp_settings_of_a_patch() {
+    let base = RawSettings::from_settings(&AppSettings::default());
+    let patch = RawSettings {
+        mcp_enabled: Some(true),
+        mcp_port: Some(40000.0),
+        ..RawSettings::default()
+    };
+
+    let merged = sanitize(base.overridden_by(patch));
+
+    assert!(merged.mcp_enabled);
+    assert_eq!(merged.mcp_port, 40000);
+    assert!(merged.mcp_token.is_empty());
+}

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import type { FolderDto } from '../bindings/FolderDto';
+import type { McpStatusDto } from '../bindings/McpStatusDto';
 import type { NoteDto } from '../bindings/NoteDto';
 import { Folder, FolderDeleteMode } from '../models/folder.model';
 import { Note } from '../models/note.model';
@@ -51,8 +52,11 @@ export class DesktopBridgeService {
     return this.available ? call('shell_open_external', { url }) : Promise.resolve();
   }
 
-  /** Asks where to save the export, then writes it: the written path, `null` when cancelled (or outside the app). */
-  saveExport(kind: 'md' | 'html' | 'zip', suggestedName: string, payload: string | { path: string; content: string }[]): Promise<string | null> {
+  /**
+   * Asks where to save the export, then writes it: the written path, `null` when cancelled (or outside the app). `pdf` and
+   * `pdf-zip` take standalone HTML pages, printed to PDF by the main process.
+   */
+  saveExport(kind: 'md' | 'html' | 'pdf' | 'zip' | 'pdf-zip', suggestedName: string, payload: string | { path: string; content: string }[]): Promise<string | null> {
     return this.available ? call('export_save', { kind, suggestedName, payload }) : Promise.resolve(null);
   }
 
@@ -175,6 +179,16 @@ export class DesktopBridgeService {
     return this.available ? call<SettingsUpdateResult>('settings_set', { patch }) : null;
   }
 
+  // MCP server
+  async getMcpStatus(): Promise<McpStatusDto | null> {
+    return this.available ? call<McpStatusDto>('mcp_status') : null;
+  }
+
+  /** Replaces the MCP token (clients configured with the old one are refused); returns the settings in effect. */
+  async regenerateMcpToken(): Promise<AppSettings | null> {
+    return this.available ? call<AppSettings>('mcp_regenerate_token') : null;
+  }
+
   // Updates
   async getUpdateInfo(): Promise<UpdateInfo | null> {
     return this.available ? call<UpdateInfo | null>('update_get_info') : null;
@@ -200,6 +214,10 @@ export class DesktopBridgeService {
 
   onSettingsChanged(callback: (settings: AppSettings) => void): () => void {
     return subscribe('settings:changed', callback);
+  }
+
+  onMcpStatus(callback: (status: McpStatusDto) => void): () => void {
+    return subscribe('mcp:status', callback);
   }
 
   onOpenSettings(callback: () => void): () => void {

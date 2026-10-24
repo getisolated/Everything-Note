@@ -10,6 +10,7 @@ import { formatAccelerator, isReservedAccelerator, keyEventToAccelerator, physic
 import { CheckboxComponent } from '../../shared/ui/checkbox.component';
 import { SelectComponent } from '../../shared/ui/select.component';
 import { DaftrLogotypeComponent } from '../../shared/ui/brand.component';
+import { McpSettingsComponent } from './mcp-settings.component';
 import {
   SETTING_DEFINITIONS, SettingDefinition, definitionsForPlatform, filterSettings, groupByCategory, settingDescription, settingOptions, settingTitle,
 } from './settings-definitions';
@@ -17,7 +18,7 @@ import {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CheckboxComponent, SelectComponent, DaftrLogotypeComponent],
+  imports: [CheckboxComponent, SelectComponent, DaftrLogotypeComponent, McpSettingsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (isOpen()) {
@@ -119,6 +120,14 @@ import {
                             <div class="error">{{ shortcutError()?.message }}</div>
                           }
                         }
+                        @case ('mcpToken') {
+                          <div class="description">{{ descriptionOf(def) }}</div>
+                          <app-mcp-settings part="token" />
+                        }
+                        @case ('mcpConnection') {
+                          <div class="description">{{ descriptionOf(def) }}</div>
+                          <app-mcp-settings part="connection" />
+                        }
                       }
                     </div>
                   }
@@ -208,6 +217,9 @@ export class SettingsComponent {
   }
 
   isModified(def: SettingDefinition): boolean {
+    if (def.fixed) {
+      return false;
+    }
     if (def.shortcutId) {
       return def.shortcutId in this.settings().appShortcuts;
     }

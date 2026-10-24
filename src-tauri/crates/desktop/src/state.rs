@@ -5,6 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use presentation::Services;
 use tauri::{AppHandle, Manager};
 
+use crate::mcp::McpState;
 use crate::shortcut::ShortcutState;
 use crate::updater::UpdateState;
 use crate::windows::overlay::OverlayState;
@@ -23,6 +24,8 @@ pub struct DesktopState {
     pub shortcut: ShortcutState,
     /// Mise à jour trouvée / téléchargée.
     pub updates: UpdateState,
+    /// Serveur MCP.
+    pub mcp: McpState,
 }
 
 impl DesktopState {
@@ -35,6 +38,7 @@ impl DesktopState {
             overlay: OverlayState::default(),
             shortcut: ShortcutState::default(),
             updates: UpdateState::default(),
+            mcp: McpState::default(),
         }
     }
 

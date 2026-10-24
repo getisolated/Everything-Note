@@ -14,6 +14,7 @@
   <a href="https://github.com/getisolated/Daftr/releases/latest">Download</a> ·
   <a href="#features">Features</a> ·
   <a href="#keyboard-shortcuts">Shortcuts</a> ·
+  <a href="#connect-an-ai-mcp">AI (MCP)</a> ·
   <a href="#upgrading-from-everything-note">Upgrading from Everything Note</a> ·
   <a href="#development">Development</a>
 </p>
@@ -55,12 +56,13 @@ Your data stays on your machine: notes live in a SQLite database and settings in
 - **Collections** — open folders of markdown files from your disk (a repository's docs, for instance) next to your notes. Files open in tabs, save to disk, reload when changed by another program, and are found by the palette search. `.md` files open with Daftr from the Explorer or the Finder.
 - **Tabs** — drag & drop reordering, pinning, session restore.
 - **Formatting bar** — a Word-like toolbar reflecting the formatting under the caret. `Alt+T` toggles it; size, style and position are settings.
-- **Quick-note overlay** — a global shortcut (`Ctrl+Alt+Q` by default, `⌥⌘Q` on macOS) pops a small always-on-top window anywhere on screen. Notes sent from it are gathered in a single *Quick notes* document, where each one can be copied, edited or deleted.
-- **Copy & export** — copy a note as markdown, export it as Markdown or standalone HTML, export a folder as a ZIP of `.md` files.
+- **Quick-note overlay** — a global shortcut (`Ctrl+Alt+Q` by default, `⌥⌘Q` on macOS) pops a small always-on-top window anywhere on screen. Notes sent from it are gathered in a single *Quick notes* document, where each one can be copied, edited, deleted or converted into a regular note (filed in *Inbox* if it has no folder).
+- **Copy & export** — copy a note as markdown, export it as Markdown, standalone HTML or PDF (A4 pages, rendered like the preview: tables, colored code, Mermaid diagrams). Export a folder, or a multi-selection of notes and folders, as a ZIP of `.md` files or of PDF files.
 - **Themes** — Dark (default), Light, GitHub Light, Solarized Light, Violet Light, GitHub Dark Dimmed, or *System* following the OS. `Ctrl+K Ctrl+T` previews them live.
 - **Settings** — a VS Code-like settings editor (`Ctrl+,`) with search, categories and reset to default. Every shortcut can be rebound there.
 - **System tray / menu bar** — closing the window keeps Daftr running in the tray; optional launch at Windows startup. On macOS it stays in the Dock and the menu bar (`⇧⌘W` closes the window the same way), `⌘Q` quits, and *Launch at login* is optional; the menu bar icon can be turned off in Settings (Daftr keeps running in the Dock).
 - **Languages** — English and French; the first launch follows the OS locale.
+- **MCP server (AI access)** — an optional local [MCP](https://modelcontextprotocol.io) server lets AI assistants (Claude Code, Claude Desktop, Cursor…) list, search, read, create and edit your notes. It only listens on `127.0.0.1`, requires an access token, and cannot delete notes; notes written by an AI show up in the app at once. See [Connect an AI (MCP)](#connect-an-ai-mcp).
 
 ## Keyboard shortcuts
 
@@ -93,6 +95,31 @@ On macOS, `⌘` replaces `Ctrl` and `⌥` replaces `Alt`, with two exceptions: t
 On macOS the global shortcut is bound to the physical key position. Until it has been recorded once, Daftr assumes an AZERTY keyboard: the default `⌥⌘Q` is the key labelled Q on an AZERTY layout, which is `⌥⌘A` on a QWERTY one. Recording the shortcut again in **Settings** binds the right key for any layout.
 
 In the overlay: `Enter` sends (`Shift+Enter` = new line) — or, if configured, `Enter` = new line and `Ctrl+Enter` (`⌘↩` on macOS) sends. `Esc` or a click outside hides it; the draft is kept.
+
+## Connect an AI (MCP)
+
+1. Open **Settings → AI (MCP)** and turn on **MCP Server**. Daftr generates an access token and starts the server on `http://127.0.0.1:38427/mcp` (the port can be changed there; the status line tells if it is already taken).
+2. Copy the snippet for your client from the same page:
+   - **Claude Code**: run the command in a terminal:
+     ```bash
+     claude mcp add --transport http daftr http://127.0.0.1:38427/mcp --header "Authorization: Bearer <token>"
+     ```
+   - **Claude Desktop** (needs Node.js): add the entry to `claude_desktop_config.json`, then restart Claude Desktop. It goes through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+     ```json
+     {
+       "mcpServers": {
+         "daftr": {
+           "command": "npx",
+           "args": ["-y", "mcp-remote", "http://127.0.0.1:38427/mcp", "--header", "Authorization:${AUTH_HEADER}"],
+           "env": { "AUTH_HEADER": "Bearer <token>" }
+         }
+       }
+     }
+     ```
+   - **Other clients** (Cursor…): a Streamable HTTP server at the same URL with the header `Authorization: Bearer <token>`.
+3. Ask away: *"Summarize my notes tagged meeting"*, *"Add today's decisions to my Project X note"*.
+
+Tools: `list_folders`, `list_notes`, `search_notes`, `get_note`, `list_tags`, `create_note` (into Inbox by default), `update_note`, `append_to_note`. There is no delete tool, and collections (folders of markdown files) are not exposed. **Regenerate** the token to disconnect every configured client. Daftr must be running for the AI to reach your notes.
 
 ## Upgrading from Everything Note
 
@@ -151,6 +178,8 @@ src-tauri/                   # Rust workspace
     app/                     # Use cases (notes, folders, collections, settings, export) and their ports (traits)
     adapter-sqlite/          # SQLite store: schema, idempotent migrations, FTS5 triggers, queries
     adapter-fs/              # settings.json, collection files, Recycle Bin, ZIP export, scan/watch/search thread
+    adapter-mcp/             # Local MCP server (rmcp, Streamable HTTP on 127.0.0.1, bearer token): the AI tools on notes
+    adapter-print/           # PDF export: a hidden window prints the page natively (WKWebView / WebView2), the only `unsafe` code
     presentation/            # DTOs exported to TypeScript (ts-rs), IPC errors, event names
     desktop/                 # Tauri shell: IPC commands, main + overlay windows, tray, global shortcut, autostart, updater
       tauri.conf.json        # Bundle, updater endpoint and public key, NSIS hook (removes the Everything Note versions)

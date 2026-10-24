@@ -84,6 +84,13 @@ pub struct SettingsDto {
     pub collections_exclude: Vec<String>,
     /// Position de l'overlay (gérée par le processus principal).
     pub overlay_position: Option<OverlayPositionDto>,
+    /// Serveur MCP activé.
+    pub mcp_enabled: bool,
+    /// Port du serveur MCP.
+    pub mcp_port: u16,
+    /// Jeton du serveur MCP (généré par le processus principal), vide s'il n'a jamais été
+    /// activé.
+    pub mcp_token: String,
 }
 
 impl From<&AppSettings> for SettingsDto {
@@ -118,6 +125,9 @@ impl From<&AppSettings> for SettingsDto {
             overlay_position: settings
                 .overlay_position
                 .map(|p| OverlayPositionDto { x: p.x, y: p.y }),
+            mcp_enabled: settings.mcp_enabled,
+            mcp_port: settings.mcp_port,
+            mcp_token: settings.mcp_token.clone(),
         }
     }
 }

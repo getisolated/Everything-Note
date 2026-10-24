@@ -113,4 +113,17 @@ collectionsExclude: Array<string>,
 /**
  * Position de l'overlay (gérée par le processus principal).
  */
-overlayPosition: OverlayPositionDto | null, };
+overlayPosition: OverlayPositionDto | null, 
+/**
+ * Serveur MCP activé.
+ */
+mcpEnabled: boolean, 
+/**
+ * Port du serveur MCP.
+ */
+mcpPort: number, 
+/**
+ * Jeton du serveur MCP (généré par le processus principal), vide s'il n'a jamais été
+ * activé.
+ */
+mcpToken: string, };

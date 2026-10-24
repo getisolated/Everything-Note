@@ -37,7 +37,6 @@ function buildDecorations(view: EditorView): DecorationSet {
   tree.iterate({
     enter(node) {
       const { from, to, name } = node;
-      const inCursor = cursorInRange(view, from, to);
 
       switch (name) {
         // ── Headings ──────────────────────────────────────────────

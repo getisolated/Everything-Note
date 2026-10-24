@@ -6,6 +6,7 @@
 mod collections;
 mod export;
 mod folders;
+mod mcp;
 mod notes;
 mod settings;
 mod shell;
@@ -54,6 +55,8 @@ pub fn handler() -> impl Fn(Invoke) -> bool + Send + Sync + 'static {
         settings::settings_get,
         settings::settings_set,
         settings::overlay_hide,
+        mcp::mcp_status,
+        mcp::mcp_regenerate_token,
         export::export_save,
         updates::update_get_info,
         updates::update_apply,

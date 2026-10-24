@@ -68,6 +68,28 @@ export class NotesService {
     return note;
   }
 
+  /**
+   * Turns a quick note into a normal note: the quick-note tag goes (the other tags stay), the title is derived
+   * from the content like on save, and a note without folder is filed in the default folder.
+   * Returns the converted note, or `null` when `id` is not a quick note.
+   */
+  async convertQuickNote(id: number): Promise<Note | null> {
+    const note = this._notes().find(n => n.id === id);
+    if (!note || !note.tags.includes(QUICK_NOTE_TAG)) return null;
+
+    const updated = await this.update(id, {
+      tags: note.tags.filter(tag => tag !== QUICK_NOTE_TAG),
+      title: this.extractTitle(note.content),
+    });
+    if (!updated) return null;
+
+    const inbox = this.folders.defaultFolder();
+    if (updated.folderId === null && inbox) {
+      await this.moveToFolder(id, inbox.id);
+    }
+    return this._notes().find(n => n.id === id) ?? updated;
+  }
+
   /** Moves the note to a folder (`null` = root) without counting as an edit. */
   async moveToFolder(id: number, folderId: number | null): Promise<void> {
     const moved = await this.bridge.moveNote(id, folderId);

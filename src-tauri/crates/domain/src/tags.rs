@@ -26,9 +26,34 @@ pub fn rename_tag(tags: &[String], from: &str, to: &str) -> Vec<String> {
     renamed
 }
 
+/// Les tags sans les espaces autour, sans tag vide ni doublon, dans leur ordre.
+///
+/// ```
+/// let tags = vec![" work ".to_owned(), "".to_owned(), "work".to_owned()];
+/// assert_eq!(domain::tags::normalize_tags(&tags), vec!["work"]);
+/// ```
+pub fn normalize_tags(tags: &[String]) -> Vec<String> {
+    let mut kept: Vec<String> = Vec::with_capacity(tags.len());
+
+    for tag in tags.iter().map(|tag| tag.trim()) {
+        if !tag.is_empty() && !kept.iter().any(|known| known == tag) {
+            kept.push(tag.to_owned());
+        }
+    }
+    kept
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn trims_and_deduplicates_tags() {
+        assert_eq!(
+            normalize_tags(&tags(&["b", " a", "", "  ", "a ", "b"])),
+            tags(&["b", "a"])
+        );
+    }
 
     fn tags(values: &[&str]) -> Vec<String> {
         values.iter().map(|value| (*value).to_owned()).collect()

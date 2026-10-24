@@ -1,9 +1,9 @@
 //! Validation des réglages non fiables.
 
 use super::{
-    AppSettings, FormattingBarMode, FormattingBarPosition, FormattingBarStyle, OVERLAY_MAX_HEIGHT,
-    OVERLAY_MAX_WIDTH, OVERLAY_MIN_HEIGHT, OVERLAY_MIN_WIDTH, RawPosition, RawSettings,
-    ShortcutMode, ThemeId, ThemeKind, ThemePreference,
+    AppSettings, FormattingBarMode, FormattingBarPosition, FormattingBarStyle, MCP_MAX_PORT,
+    MCP_MIN_PORT, OVERLAY_MAX_HEIGHT, OVERLAY_MAX_WIDTH, OVERLAY_MIN_HEIGHT, OVERLAY_MIN_WIDTH,
+    RawPosition, RawSettings, ShortcutMode, ThemeId, ThemeKind, ThemePreference, is_mcp_token,
 };
 use crate::i18n::Language;
 use crate::overlay::Position;
@@ -24,6 +24,7 @@ pub fn sanitize_settings(raw: &RawSettings, base: &AppSettings) -> AppSettings {
     apply_overlay(raw, &mut settings);
     apply_appearance(raw, &mut settings);
     apply_editor(raw, &mut settings);
+    apply_mcp(raw, &mut settings);
     settings
 }
 
@@ -113,6 +114,18 @@ fn apply_editor(raw: &RawSettings, settings: &mut AppSettings) {
     settings.show_breadcrumbs = raw.show_breadcrumbs.unwrap_or(settings.show_breadcrumbs);
     settings.hide_scrollbar = raw.hide_scrollbar.unwrap_or(settings.hide_scrollbar);
     settings.open_in_preview = raw.open_in_preview.unwrap_or(settings.open_in_preview);
+}
+
+fn apply_mcp(raw: &RawSettings, settings: &mut AppSettings) {
+    let (min, max) = (u32::from(MCP_MIN_PORT), u32::from(MCP_MAX_PORT));
+
+    settings.mcp_enabled = raw.mcp_enabled.unwrap_or(settings.mcp_enabled);
+    // Borné à [MCP_MIN_PORT, MCP_MAX_PORT] : la conversion en u16 ne peut pas échouer
+    let port = clamp_size(raw.mcp_port, min, max, u32::from(settings.mcp_port));
+    settings.mcp_port = u16::try_from(port).unwrap_or(settings.mcp_port);
+    if let Some(token) = raw.mcp_token.as_deref().filter(|token| is_mcp_token(token)) {
+        settings.mcp_token = token.to_owned();
+    }
 }
 
 fn parsed<T: Copy>(value: &Option<String>, parse: impl Fn(&str) -> Option<T>, fallback: T) -> T {

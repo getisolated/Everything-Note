@@ -4,6 +4,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use adapter_fs::{CollectionsWatcher, DiskExportWriter, DiskFiles, SettingsFile};
+use adapter_mcp::RandomSecrets;
+use adapter_print::WebviewPdfRenderer;
 use adapter_sqlite::SqliteStore;
 use anyhow::Context;
 use app::collections::{CollectionPorts, CollectionsService};
@@ -17,7 +19,7 @@ use tauri::{App, AppHandle, Manager};
 use crate::events::WindowSink;
 use crate::state::{DesktopState, desktop};
 use crate::windows::{main_window, overlay};
-use crate::{data_dir, shortcut, startup, tray, updater};
+use crate::{data_dir, mcp, shortcut, startup, tray, updater};
 
 /// Prépare l'application ; une erreur ici empêche le lancement (base illisible…).
 pub fn run(app: &mut App) -> anyhow::Result<()> {
@@ -40,8 +42,10 @@ fn build_services(app: &AppHandle, directory: &Path) -> anyhow::Result<Services>
         SqliteStore::open(&directory.join(data_dir::DATABASE_FILE))
             .context("ouverture de la base")?,
     );
-    let settings =
-        SettingsService::new(Arc::new(SettingsFile::new(directory.join("settings.json"))));
+    let settings = SettingsService::new(
+        Arc::new(SettingsFile::new(directory.join("settings.json"))),
+        Arc::new(RandomSecrets),
+    );
     let loaded = settings.load(sys_locale::get_locale().as_deref());
 
     let sink = Arc::new(WindowSink::new(app.clone()));
@@ -54,11 +58,14 @@ fn build_services(app: &AppHandle, directory: &Path) -> anyhow::Result<Services>
     });
 
     Ok(Services {
-        notes: NotesService::new(store.clone(), store.clone()),
-        folders: FoldersService::new(store),
+        notes: Arc::new(NotesService::new(store.clone(), store.clone())),
+        folders: Arc::new(FoldersService::new(store)),
         collections,
         settings,
-        export: ExportService::new(Arc::new(DiskExportWriter)),
+        export: ExportService::new(
+            Arc::new(DiskExportWriter),
+            Arc::new(WebviewPdfRenderer::new(app.clone())),
+        ),
     })
 }
 
@@ -85,4 +92,5 @@ fn start_background(app: &AppHandle) {
         tracing::error!(shortcut = %settings.global_shortcut, "raccourci global indisponible");
     }
     updater::start(app);
+    mcp::sync(app);
 }

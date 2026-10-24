@@ -54,6 +54,8 @@ export const FR_WORKSPACE: Record<keyof typeof EN_WORKSPACE, string> = {
   'workspace.palette.cmd.exportNoteMdDesc': 'Enregistrer la note courante dans un fichier .md',
   'workspace.palette.cmd.exportNoteHtml': 'Exporter la note en HTML…',
   'workspace.palette.cmd.exportNoteHtmlDesc': 'Enregistrer la note courante comme page web autonome',
+  'workspace.palette.cmd.exportNotePdf': 'Exporter la note en PDF…',
+  'workspace.palette.cmd.exportNotePdfDesc': 'Enregistrer la note courante comme document PDF (A4)',
   'workspace.palette.cmd.closeTab': 'Fermer l’onglet',
   'workspace.palette.cmd.closeTabDesc': 'Fermer l’onglet courant',
   'workspace.palette.cmd.nextTab': 'Onglet suivant',

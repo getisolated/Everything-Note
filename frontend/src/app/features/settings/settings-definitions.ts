@@ -5,7 +5,7 @@ import { APP_SHORTCUTS } from '../../core/models/app-shortcuts.model';
 import { THEMES, ThemeKind } from '../../core/models/theme.model';
 import type { Platform } from '../../core/services/platform.service';
 
-export type SettingControl = 'checkbox' | 'number' | 'select' | 'shortcut' | 'list';
+export type SettingControl = 'checkbox' | 'number' | 'select' | 'shortcut' | 'list' | 'mcpToken' | 'mcpConnection';
 
 /** Option of a select setting: a translated `labelKey`, or a literal `label` that is never translated (a language named in itself). */
 export interface SettingOption {
@@ -30,6 +30,10 @@ export interface SettingDefinition {
   options?: SettingOption[];
   /** Platforms where the setting applies; absent = every platform. */
   platforms?: Platform[];
+  /** Shown but never reset from here: the value belongs to the main process, or the entry has no value of its own. */
+  fixed?: boolean;
+  /** Informational entry: its key is not an AppSettings key. */
+  panel?: boolean;
 }
 
 export interface SettingsSection {
@@ -268,6 +272,40 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     titleKey: 'settings.enterToSend.title',
     descriptionKey: 'settings.enterToSend.description',
     control: 'checkbox',
+  },
+  {
+    key: 'mcpEnabled',
+    categoryKey: 'settings.category.mcp',
+    titleKey: 'settings.mcpEnabled.title',
+    descriptionKey: 'settings.mcpEnabled.description',
+    control: 'checkbox',
+  },
+  {
+    key: 'mcpPort',
+    categoryKey: 'settings.category.mcp',
+    titleKey: 'settings.mcpPort.title',
+    descriptionKey: 'settings.mcpPort.description',
+    control: 'number',
+    min: 1024,
+    max: 65535,
+    step: 1,
+  },
+  {
+    key: 'mcpToken',
+    categoryKey: 'settings.category.mcp',
+    titleKey: 'settings.mcpToken.title',
+    descriptionKey: 'settings.mcpToken.description',
+    control: 'mcpToken',
+    fixed: true,
+  },
+  {
+    key: 'mcpConnection',
+    categoryKey: 'settings.category.mcp',
+    titleKey: 'settings.mcpConnection.title',
+    descriptionKey: 'settings.mcpConnection.description',
+    control: 'mcpConnection',
+    fixed: true,
+    panel: true,
   },
   ...APP_SHORTCUT_DEFINITIONS,
 ];

@@ -15,18 +15,21 @@ pub mod shell;
 
 pub use error::{IpcError, IpcResult};
 
+use std::sync::Arc;
+
 use app::collections::CollectionsService;
 use app::export::ExportService;
 use app::folders::FoldersService;
 use app::notes::NotesService;
 use app::settings::SettingsService;
 
-/// Les services de l'application, partagés par toutes les commandes.
+/// Les services de l'application, partagés par toutes les commandes. Notes et dossiers sont
+/// aussi servis aux IA par le serveur MCP, d'où leur partage par `Arc`.
 pub struct Services {
     /// Notes.
-    pub notes: NotesService,
+    pub notes: Arc<NotesService>,
     /// Dossiers.
-    pub folders: FoldersService,
+    pub folders: Arc<FoldersService>,
     /// Collections.
     pub collections: CollectionsService,
     /// Réglages.

@@ -7,7 +7,7 @@ const blocks = [
   { id: 1, text: 'first', label: '09:00' },
   { id: 2, text: 'second', label: '09:05' },
 ];
-const handlers = { save: () => undefined, remove: () => undefined, copy: () => undefined, editEnded: () => undefined };
+const handlers = { save: () => undefined, remove: () => undefined, copy: () => undefined, convert: () => undefined, editEnded: () => undefined };
 
 function quickNotesState(): EditorState {
   return EditorState.create({ doc: joinBlocks(blocks), extensions: [noteTimestamps, quickNotesEditing(handlers)] })

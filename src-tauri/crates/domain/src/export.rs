@@ -9,25 +9,42 @@ text_enum! {
         Markdown => "md",
         /// Note rendue en page HTML autonome.
         Html => "html",
-        /// Notes d'un dossier dans une archive ZIP.
+        /// Note rendue en PDF (impression de sa page HTML autonome).
+        Pdf => "pdf",
+        /// Notes en markdown dans une archive ZIP.
         Zip => "zip",
+        /// Notes rendues en PDF dans une archive ZIP.
+        PdfZip => "pdf-zip",
     }
 }
 
 impl ExportKind {
     /// Extension du fichier écrit (sans point).
     pub const fn extension(self) -> &'static str {
-        self.as_str()
+        match self {
+            Self::Zip | Self::PdfZip => "zip",
+            Self::Markdown | Self::Html | Self::Pdf => self.as_str(),
+        }
+    }
+
+    /// Extension des fichiers d'une archive (sans point), `None` pour un fichier seul.
+    pub const fn entry_extension(self) -> Option<&'static str> {
+        match self {
+            Self::Zip => Some("md"),
+            Self::PdfZip => Some("pdf"),
+            Self::Markdown | Self::Html | Self::Pdf => None,
+        }
     }
 }
 
-/// Une note d'un export de dossier : son chemin sous le dossier exporté (dossiers puis titre,
-/// sans extension, séparés par `/`) et son texte.
+/// Une note d'un export de plusieurs notes : son chemin dans l'archive (dossiers puis titre,
+/// sans extension, séparés par `/`) et son contenu (markdown, ou page HTML autonome à rendre
+/// en PDF).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExportedNote {
     /// Chemin relatif.
     pub path: String,
-    /// Texte markdown.
+    /// Markdown ou page HTML, selon le format.
     pub content: String,
 }
 
@@ -79,15 +96,15 @@ fn is_reserved_device(name: &str) -> bool {
         && digit.chars().all(|c| c.is_ascii_digit())
 }
 
-/// Chemins des notes dans l'archive : chaque segment rendu sûr, `.md` ajouté, les doublons
-/// (sans tenir compte de la casse) numérotés `Note (2).md`.
-pub fn zip_paths(notes: &[ExportedNote]) -> Vec<String> {
+/// Chemins des notes dans l'archive : chaque segment rendu sûr, l'extension `extension`
+/// ajoutée, les doublons (sans tenir compte de la casse) numérotés `Note (2).md`.
+pub fn zip_paths(notes: &[ExportedNote], extension: &str) -> Vec<String> {
     let mut used: Vec<String> = Vec::with_capacity(notes.len());
 
     notes
         .iter()
         .map(|note| {
-            let path = unique_zip_path(&safe_segments(&note.path), &used);
+            let path = unique_zip_path(&safe_segments(&note.path), extension, &used);
             used.push(path.to_lowercase());
             path
         })
@@ -101,15 +118,15 @@ fn safe_segments(path: &str) -> String {
         .join("/")
 }
 
-fn unique_zip_path(base: &str, used: &[String]) -> String {
+fn unique_zip_path(base: &str, extension: &str, used: &[String]) -> String {
     let is_free = |candidate: &str| !used.contains(&candidate.to_lowercase());
-    let first = format!("{base}.md");
+    let first = format!("{base}.{extension}");
 
     if is_free(&first) {
         return first;
     }
     (2..)
-        .map(|copy| format!("{base} ({copy}).md"))
+        .map(|copy| format!("{base} ({copy}).{extension}"))
         .find(|candidate| is_free(candidate))
         .unwrap_or(first)
 }
@@ -154,14 +171,23 @@ mod tests {
 
     #[test]
     fn adds_the_extension_keeps_folders_and_numbers_duplicates() {
-        let paths = zip_paths(&[note("Projet/Idées"), note("Projet/idées"), note("a:b")]);
+        let paths = zip_paths(
+            &[note("Projet/Idées"), note("Projet/idées"), note("a:b")],
+            "md",
+        );
         assert_eq!(paths, ["Projet/Idées.md", "Projet/idées (2).md", "a-b.md"]);
     }
 
     #[test]
     fn numbers_every_further_duplicate() {
-        let paths = zip_paths(&[note("x"), note("x"), note("X")]);
+        let paths = zip_paths(&[note("x"), note("x"), note("X")], "md");
         assert_eq!(paths, ["x.md", "x (2).md", "X (3).md"]);
+    }
+
+    #[test]
+    fn uses_the_extension_of_the_archive_entries() {
+        let paths = zip_paths(&[note("Projet/Plan"), note("projet/plan")], "pdf");
+        assert_eq!(paths, ["Projet/Plan.pdf", "projet/plan (2).pdf"]);
     }
 
     #[test]
@@ -170,6 +196,13 @@ mod tests {
             ExportKind::parse("zip").map(ExportKind::extension),
             Some("zip")
         );
-        assert_eq!(ExportKind::parse("pdf"), None);
+        assert_eq!(ExportKind::parse("pdf"), Some(ExportKind::Pdf));
+        assert_eq!(ExportKind::Pdf.extension(), "pdf");
+        assert_eq!(ExportKind::parse("pdf-zip"), Some(ExportKind::PdfZip));
+        assert_eq!(ExportKind::PdfZip.extension(), "zip");
+        assert_eq!(ExportKind::PdfZip.entry_extension(), Some("pdf"));
+        assert_eq!(ExportKind::Zip.entry_extension(), Some("md"));
+        assert_eq!(ExportKind::Html.entry_extension(), None);
+        assert_eq!(ExportKind::parse("docx"), None);
     }
 }

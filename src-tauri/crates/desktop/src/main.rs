@@ -9,6 +9,7 @@ mod data_dir;
 mod events;
 mod file_protocol;
 mod lifecycle;
+mod mcp;
 #[cfg(target_os = "macos")]
 mod menu;
 mod open_args;
